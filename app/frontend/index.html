@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoxPopulAI</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <header id="header">
+    <div class="header-brand">VoxPopulAI</div>
+    <div class="header-tagline">Simulateur de vote synthetique</div>
+  </header>
+
+  <nav id="sidebar">
+    <div class="nav-group">
+      <ul class="nav-links">
+        <li><a href="#/vote" data-route="vote"><span class="nav-dot vote"></span> Vote</a></li>
+        <li><a href="#/personas" data-route="personas"><span class="nav-dot personas"></span> Personas</a></li>
+        <li><a href="#/history" data-route="history"><span class="nav-dot history"></span> Historique</a></li>
+        <li><a href="#/settings" data-route="settings"><span class="nav-dot settings"></span> Parametres</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">v0.1 &middot; VoxPopulAI</div>
+  </nav>
+
+  <main id="app"></main>
+
+  <script src="/js/router.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/ui-helper.js"></script>
+  <script src="/js/views/vote.js"></script>
+  <script src="/js/views/personas.js"></script>
+  <script src="/js/views/history.js"></script>
+  <script src="/js/views/settings.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

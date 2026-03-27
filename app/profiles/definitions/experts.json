@@ -1,0 +1,16 @@
+{
+  "name": "experts",
+  "description": "Panel d'experts pluridisciplinaires pour evaluation technique ou strategique.",
+  "context": "Panel d'experts pluridisciplinaires dans un contexte professionnel occidental contemporain.",
+  "dimensions": {
+    "role": [
+      "chercheur/academique",
+      "consultant senior",
+      "dirigeant/CxO",
+      "investisseur/analyste",
+      "regulateur/institutionnel"
+    ],
+    "experience": ["10-15 ans", "15-25 ans", "25+ ans"],
+    "orientation": ["innovation/disruption", "pragmatique/incrementale", "prudence/risque"]
+  }
+}

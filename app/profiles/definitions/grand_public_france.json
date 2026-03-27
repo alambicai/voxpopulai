@@ -1,0 +1,69 @@
+{
+  "name": "grand_public_france",
+  "description": "Echantillon representatif de la population francaise adulte (source: INSEE 2024).",
+  "context": "France metropolitaine contemporaine, 2024.",
+  "name_generator": {
+    "type": "insee_france",
+    "depends_on": ["sexe", "age", "religion"]
+  },
+  "dimensions": {
+    "sexe": {
+      "homme": 0.48,
+      "femme": 0.52
+    },
+    "age": {
+      "18-24 ans": 0.11,
+      "25-34 ans": 0.15,
+      "35-49 ans": 0.24,
+      "50-64 ans": 0.25,
+      "65+ ans": 0.25
+    },
+    "csp": {
+      "cadres et professions intellectuelles": 0.10,
+      "professions intermediaires": 0.14,
+      "employes": 0.16,
+      "ouvriers": 0.12,
+      "inactifs": 0.48
+    },
+    "habitat": {
+      "rural": 0.22,
+      "ville petite/moyenne": 0.30,
+      "grande ville": 0.28,
+      "region parisienne": 0.20
+    },
+    "education": {
+      "sans diplome / brevet": 0.22,
+      "CAP / BEP": 0.23,
+      "baccalaureat": 0.17,
+      "bac+2 / bac+3": 0.20,
+      "bac+5 et plus": 0.18
+    },
+    "situation_familiale": {
+      "celibataire": 0.50,
+      "en couple": 0.50
+    },
+    "nb_enfants": {
+      "0": 0.45,
+      "1": 0.20,
+      "2": 0.22,
+      "3 ou plus": 0.13
+    },
+    "sensibilite_politique": {
+      "extreme gauche": 0.06,
+      "gauche": 0.12,
+      "centre-gauche": 0.12,
+      "centre": 0.13,
+      "centre-droit": 0.13,
+      "droite": 0.16,
+      "extreme droite": 0.10,
+      "apolitique": 0.18
+    },
+    "religion": {
+      "sans religion": 0.50,
+      "catholique": 0.29,
+      "musulman": 0.10,
+      "protestant": 0.03,
+      "autre religion": 0.08
+    }
+  }
+}

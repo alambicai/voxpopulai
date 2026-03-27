@@ -1,0 +1,91 @@
+{
+  "name": "donjon_et_dragon",
+  "description": "Compagnie d'aventuriers de Donjon & Dragon. Races, classes, alignements et backgrounds varies des Royaumes Oublies.",
+  "context": "Univers des Royaumes Oublies (Faerun), Donjons & Dragons 5e edition.",
+  "dimensions": {
+    "race": {
+      "Humain": 0.25,
+      "Elfe": 0.15,
+      "Nain": 0.12,
+      "Halfelin": 0.10,
+      "Demi-Elfe": 0.10,
+      "Demi-Orque": 0.07,
+      "Gnome": 0.06,
+      "Tieffelin": 0.07,
+      "Dragonborn": 0.05,
+      "Aarakocra": 0.03
+    },
+    "classe": {
+      "Guerrier": 0.14,
+      "Magicien": 0.12,
+      "Voleur": 0.12,
+      "Clerc": 0.10,
+      "Rodeur": 0.09,
+      "Paladin": 0.08,
+      "Barbare": 0.08,
+      "Barde": 0.07,
+      "Druide": 0.06,
+      "Sorcier": 0.05,
+      "Moine": 0.05,
+      "Occultiste": 0.04
+    },
+    "alignement": {
+      "Loyal Bon": {
+        "weight": 0.15,
+        "description": "honorable, protecteur, respectueux des lois et de la justice"
+      },
+      "Neutre Bon": {
+        "weight": 0.20,
+        "description": "altruiste, bienveillant, aide les autres sans dogmatisme"
+      },
+      "Chaotique Bon": {
+        "weight": 0.13,
+        "description": "rebelle au grand coeur, libre, combat l'injustice a sa facon"
+      },
+      "Loyal Neutre": {
+        "weight": 0.10,
+        "description": "discipline, pragmatique, suit un code personnel strict"
+      },
+      "Neutre Strict": {
+        "weight": 0.10,
+        "description": "equilibre, observe, refuse de prendre parti"
+      },
+      "Chaotique Neutre": {
+        "weight": 0.10,
+        "description": "imprevisible, independant, suit ses impulsions"
+      },
+      "Loyal Mauvais": {
+        "weight": 0.08,
+        "description": "dominateur, calculateur, impose sa volonte par l'ordre"
+      },
+      "Neutre Mauvais": {
+        "weight": 0.10,
+        "description": "egoiste, pragmatique, sans scrupules ni remords"
+      },
+      "Chaotique Mauvais": {
+        "weight": 0.04,
+        "description": "cruel, destructeur, seme le chaos par plaisir"
+      }
+    },
+    "niveau": {
+      "1-3 (novice)": 0.30,
+      "4-6 (apprenti)": 0.25,
+      "7-10 (veterant)": 0.20,
+      "11-14 (heros)": 0.15,
+      "15-18 (champion)": 0.07,
+      "19-20 (legendaire)": 0.03
+    },
+    "background": {
+      "Acolyte": 0.10,
+      "Charlatan": 0.08,
+      "Criminel": 0.10,
+      "Artisan de guilde": 0.10,
+      "Ermite": 0.08,
+      "Noble": 0.10,
+      "Sage": 0.12,
+      "Soldat": 0.15,
+      "Marin": 0.08,
+      "Orphelin": 0.09
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/benjamin/DEV/ateam/app/services/**)",
+      "Read(//data/DEV/ateam/app/services/**)",
+      "Read(//home/benjamin/DEV/ateam/app/services/providers/**)",
+      "Read(//data/DEV/ateam/app/services/providers/**)",
+      "Read(//home/benjamin/DEV/ateam/app/services/knowledge/**)",
+      "Read(//data/DEV/ateam/app/services/knowledge/**)",
+      "Read(//home/benjamin/DEV/ateam/app/api/routes/**)",
+      "Read(//data/DEV/ateam/app/api/routes/**)",
+      "Read(//home/benjamin/DEV/ateam/app/frontend/js/views/**)",
+      "Read(//data/DEV/ateam/app/frontend/js/views/**)",
+      "Read(//home/benjamin/DEV/**)",
+      "Read(//data/DEV/**)",
+      "Read(//home/benjamin/DEV/ateam/app/frontend/js/**)",
+      "Read(//data/DEV/ateam/app/frontend/js/**)",
+      "Read(//home/benjamin/DEV/ateam/app/frontend/css/**)",
+      "Read(//data/DEV/ateam/app/frontend/css/**)"
+    ],
+    "additionalDirectories": [
+      "/data/DEV/ateam/app/frontend/js"
+    ]
+  }
+}

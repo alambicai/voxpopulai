@@ -1,0 +1,15 @@
+{
+  "name": "developpeurs",
+  "description": "Panel de developpeurs logiciels avec differents niveaux et specialites.",
+  "context": "Industrie du developpement logiciel contemporaine.",
+  "dimensions": {
+    "experience": [
+      "junior (0-2 ans)",
+      "confirme (3-5 ans)",
+      "senior (6-10 ans)",
+      "expert (10+ ans)"
+    ],
+    "specialite": ["frontend", "backend", "fullstack", "devops", "data/ML", "mobile"],
+    "contexte": ["startup", "grand groupe", "ESN/consulting", "freelance", "open source"]
+  }
+}
