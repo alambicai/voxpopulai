@@ -2,13 +2,20 @@
 
 ## Objectif
 
-VoxPopulAI est un **simulateur de vote démocratique** propulsé par LLM (Large Language Models). Il génère des **personas fictifs** avec des profils sociodémographiques réalistes qui votent indépendamment sur des questions, permettant d'explorer les opinions et les tendances démographiques.
+VoxPopulAI est un **laboratoire d'exploration des LLMs** (Large Language Models) via la simulation de votes. Il génère des **personas fictifs** avec des profils sociodémographiques variés qui votent indépendamment sur des questions, permettant d'observer comment les modèles de langage réagissent différemment selon le contexte et les attributs attribués.
 
-**Cas d'usage principaux :**
-- **Sondage d'opinion** - Explorer les avis sur des sujets de société avant un référendum
-- **Validation de décisions** - Tester la réaction de différentes populations à une proposition
-- **Veille démographique** - Comprendre comment différents profils perçoivent un sujet
-- **Jeu de rôle / Worldbuilding** - Simuler des votes dans des univers fictifs (D&D, etc.)
+**Ce que ça explore :**
+- **Comportement des LLMs** - Comment un même modèle produit des réponses différentes selon le persona qui "vote"
+- **Limites des modèles** - Jusqu'où les biais et patterns de génération influencent les résultats
+- **Impact du contexte** - Comment un changement de profil (âge, CSP, région...) modifie la "position" générée
+- **Variations de raisonnement** - Les arguments produits sont-ils cohérents avec le persona ou des clichés de l'entraînement ?
+
+**Ce que ça ne fait PAS :**
+- Prédire l'opinion réelle d'une population
+- Remplacer des études sociologiques ou des sondages
+- Simuler fidèlement la réalité sociodémographique
+
+Les résultats sont des **artefacts de génération LLM** à interpréter comme tels, pas comme des données empiriques.
 
 ---
 
@@ -190,7 +197,13 @@ pytest tests/ --cov=app --cov-fail-under=80
 
 ## Disclaimer
 
-Les résultats générés par VoxPopulAI sont **des simulations basées sur des LLMs** et ne reflètent pas nécessairement l'opinion réelle de la population. À utiliser comme outil d'exploration et de réflexion, pas comme prédiction électorale fiable.
+VoxPopulAI explore **le comportement des modèles de langage**, pas la réalité sociologique. Les votes générés reflètent les patterns, biais et limitations de l'entraînement des LLMs utilisés.
+
+- Pas de prétention de validité empirique ou sociologique
+- Les corrélations observées sont des artefacts de génération, pas des découvertes démographiques
+- À utiliser comme outil d'expérimentation sur les LLMs, pas comme base décisionnelle
+
+Pour des études d'opinion réelles, utilisez des méthodologies éprouvées et des échantillons représentatifs.
 
 ---
 
