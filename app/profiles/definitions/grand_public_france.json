@@ -1,6 +1,7 @@
 {
   "name": "grand_public_france",
   "description": "Echantillon representatif de la population francaise adulte (source: INSEE 2024).",
+  "icon": "🏛️",
   "context": "France metropolitaine contemporaine, 2024.",
   "name_generator": {
     "type": "insee_france",

@@ -58,7 +58,7 @@ async function renderVote() {
           </label>
         </div>
         <div class="vote-disclaimer-pre">
-          &#9888; SIMULATION — Les votes proviennent de personas generes par IA et ne representent pas de vraies opinions humaines.
+          ⚠️ SIMULATION — Les votes proviennent de personas generes par IA et ne representent pas de vraies opinions humaines.
         </div>
         <div class="form-actions">
           <button class="btn btn-primary" id="vf-run">Lancer le vote</button>
@@ -77,19 +77,18 @@ async function renderVote() {
       return;
     }
     container.innerHTML = profiles.map((p, i) => `
-      <label class="vote-profile-option ${i === 0 ? "selected" : ""}">
-        <input type="radio" name="vote-profile" value="${_escapeHtml(p.name)}" ${i === 0 ? "checked" : ""} style="display:none">
-        <div class="vote-profile-info">
-          <div class="vote-profile-name">${_escapeHtml(p.name)}</div>
-          <div class="vote-profile-desc">${_escapeHtml(p.description)}</div>
-        </div>
+      <label class="vote-profile-card ${i === 0 ? "selected" : ""}">
+        <input type="radio" name="vote-profile" value="${_escapeHtml(p.name)}" ${i === 0 ? "checked" : ""}>
+        <span class="vote-profile-emoji">${_escapeHtml(p.icon || "🗳️")}</span>
+        <span class="vote-profile-name">${_escapeHtml(p.name)}</span>
+        <span class="vote-profile-desc">${_escapeHtml(p.description)}</span>
       </label>
     `).join("");
-    container.querySelectorAll(".vote-profile-option").forEach(opt => {
-      opt.addEventListener("click", () => {
-        container.querySelectorAll(".vote-profile-option").forEach(o => o.classList.remove("selected"));
-        opt.classList.add("selected");
-        opt.querySelector("input").checked = true;
+    container.querySelectorAll(".vote-profile-card").forEach(card => {
+      card.addEventListener("click", () => {
+        container.querySelectorAll(".vote-profile-card").forEach(c => c.classList.remove("selected"));
+        card.classList.add("selected");
+        card.querySelector("input").checked = true;
       });
     });
   }).catch(() => {
@@ -245,7 +244,8 @@ function _renderVoteResult(result) {
   const votes = result.votes || [];
 
   const posColor = (pos) => pos === "oui" ? "vote-oui" : pos === "non" ? "vote-non" : "vote-abstention";
-  const posIcon = (pos) => pos === "oui" ? "&#9650;" : pos === "non" ? "&#9660;" : "&#9644;";
+  const posIcon = (pos) => pos === "oui" ? "✅" : pos === "non" ? "❌" : "➖";
+  const posEmoji = (pos) => pos === "oui" ? "✅" : pos === "non" ? "❌" : "➖";
 
   const consensusLabels = { fort: "Consensus fort", modere: "Consensus modere", faible: "Consensus faible", aucun: "Pas de consensus" };
 
@@ -255,11 +255,11 @@ function _renderVoteResult(result) {
       <div class="vote-section-header">Arguments cles</div>
       <div class="vote-arguments-cols">
         <div class="vote-arguments-col">
-          <div class="vote-arguments-col-title vote-oui">&#9650; Oui</div>
+          <div class="vote-arguments-col-title vote-oui">✅ Oui</div>
           <ul>${(keyArgs.oui || []).map(a => `<li>${_escapeHtml(a)}</li>`).join("")}</ul>
         </div>
         <div class="vote-arguments-col">
-          <div class="vote-arguments-col-title vote-non">&#9660; Non</div>
+          <div class="vote-arguments-col-title vote-non">❌ Non</div>
           <ul>${(keyArgs.non || []).map(a => `<li>${_escapeHtml(a)}</li>`).join("")}</ul>
         </div>
       </div>
@@ -302,11 +302,11 @@ function _renderVoteResult(result) {
       <span class="tag muted">${_escapeHtml(result.population_profile || "")}</span>
     </div>
 
-    <div class="vote-disclaimer">${_escapeHtml(result.disclaimer || "")}</div>
+    <div class="vote-disclaimer">⚠️ ${_escapeHtml(result.disclaimer || "")}</div>
 
     <div class="vote-hero">
       <div class="vote-hero-verdict ${posColor(dominant)}">
-        <span class="vote-hero-icon">${posIcon(dominant)}</span>
+        <span class="vote-hero-icon">${posEmoji(dominant)}</span>
         <span class="vote-hero-position">${_escapeHtml(dominant === "indecis" ? "Indecis" : dominant.charAt(0).toUpperCase() + dominant.slice(1))}</span>
         <span class="vote-hero-margin">${marginPct}% d'ecart</span>
       </div>
