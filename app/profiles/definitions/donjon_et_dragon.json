@@ -1,6 +1,7 @@
 {
   "name": "donjon_et_dragon",
   "description": "Compagnie d'aventuriers de Donjon & Dragon. Races, classes, alignements et backgrounds varies des Royaumes Oublies.",
+  "icon": "🗡️",
   "context": "Univers des Royaumes Oublies (Faerun), Donjons & Dragons 5e edition.",
   "dimensions": {
     "race": {

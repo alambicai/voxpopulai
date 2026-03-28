@@ -1,6 +1,7 @@
 {
   "name": "developpeurs",
   "description": "Panel de developpeurs logiciels avec differents niveaux et specialites.",
+  "icon": "💻",
   "context": "Industrie du developpement logiciel contemporaine.",
   "dimensions": {
     "experience": [

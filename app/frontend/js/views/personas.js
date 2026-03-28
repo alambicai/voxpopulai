@@ -68,12 +68,21 @@ async function _loadPersonasTab() {
 // ── Overview tab ──
 
 async function _renderPersonasOverview(container) {
-  const stats = await API.get("/personas/stats");
+  const [stats, profilesRes] = await Promise.all([
+    API.get("/personas/stats"),
+    API.get("/profiles/")
+  ]);
+  
+  const profilesList = profilesRes.profiles || [];
+  const profileIcons = {};
+  profilesList.forEach(p => {
+    profileIcons[p.name] = p.icon || "🗳️";
+  });
 
   if (stats.total === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">&#128100;</div>
+        <div class="empty-state-icon">🗳️</div>
         <div>Aucun persona genere pour le moment.</div>
         <button class="btn btn-primary" onclick="_showGenerateModal()">Generer des personas</button>
       </div>`;
@@ -82,13 +91,16 @@ async function _renderPersonasOverview(container) {
 
   let html = '<div class="personas-stats">';
   html += `<div class="personas-stat-card">
+    <div class="personas-stat-emoji">🗳️</div>
     <div class="personas-stat-value">${stats.total}</div>
     <div class="personas-stat-label">Total personas</div>
   </div>`;
 
   // Per profile
   for (const [profile, count] of Object.entries(stats.by_profile)) {
+    const icon = profileIcons[profile] || "🗳️";
     html += `<div class="personas-stat-card">
+      <div class="personas-stat-emoji">${icon}</div>
       <div class="personas-stat-value">${count}</div>
       <div class="personas-stat-label">${_escapePersonasHtml(profile)}</div>
     </div>`;
@@ -97,6 +109,7 @@ async function _renderPersonasOverview(container) {
   // Per model
   for (const [model, count] of Object.entries(stats.by_model)) {
     html += `<div class="personas-stat-card">
+      <div class="personas-stat-emoji">🤖</div>
       <div class="personas-stat-value">${count}</div>
       <div class="personas-stat-label">${_escapePersonasHtml(model)}</div>
     </div>`;

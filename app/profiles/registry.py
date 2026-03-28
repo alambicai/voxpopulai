@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 _PROFILES_DIR = Path(__file__).parent / "definitions"
 
 DimensionSpec = list[str] | dict[str, float | dict[str, Any]]
+
+
 class PopulationProfile(BaseModel):
     """Population profile for synthetic persona generation."""
 
@@ -27,6 +29,7 @@ class PopulationProfile(BaseModel):
 
     name: str
     description: str
+    icon: str = "🗳️"
     dimensions: dict[str, DimensionSpec]
     context: str = ""
     sources: list[str] = Field(default_factory=list)
@@ -91,6 +94,8 @@ class PopulationProfile(BaseModel):
     def get_descriptions(self, dimension: str) -> dict[str, str]:
         """Return {value: description} for a dimension."""
         return {v: self.get_description(dimension, v) for v in self.get_values(dimension)}
+
+
 def _load_profiles() -> dict[str, PopulationProfile]:
     """Load all JSON profiles from definitions/ directory."""
     profiles: dict[str, PopulationProfile] = {}
@@ -104,12 +109,18 @@ def _load_profiles() -> dict[str, PopulationProfile]:
             raise ValueError(f"Duplicate profile: '{profile.name}' defined multiple times.")
         profiles[profile.name] = profile
     return profiles
+
+
 _PROFILES: dict[str, PopulationProfile] = _load_profiles()
+
+
 def register_profile(profile: PopulationProfile) -> None:
     """Register an additional profile."""
     if profile.name in _PROFILES:
         raise ValueError(f"Profile '{profile.name}' already registered.")
     _PROFILES[profile.name] = profile
+
+
 def get_profile(name: str) -> PopulationProfile:
     """Return a profile by name."""
     profile = _PROFILES.get(name)
@@ -117,12 +128,18 @@ def get_profile(name: str) -> PopulationProfile:
         available = ", ".join(sorted(_PROFILES.keys()))
         raise ValueError(f"Profile '{name}' not found. Available: {available}")
     return profile
+
+
 def list_profiles() -> list[PopulationProfile]:
     """Return all available profiles sorted by name."""
     return sorted(_PROFILES.values(), key=lambda p: p.name)
+
+
 def get_distribution_weights(profile: PopulationProfile) -> dict[str, dict[str, float]]:
     """Calculate distribution weights for a profile."""
     return {dim: profile.get_weights(dim) for dim in profile.dimensions}
+
+
 def load_sources_content(profile: PopulationProfile) -> str:
     """Load and concatenate source file contents for a profile."""
     if not profile.sources:
@@ -139,6 +156,8 @@ def load_sources_content(profile: PopulationProfile) -> str:
             if content.strip():
                 parts.append(content.strip())
         except Exception:
-            logger.exception("Error reading source '%s' for profile '%s'", source_path, profile.name)
+            logger.exception(
+                "Error reading source '%s' for profile '%s'", source_path, profile.name
+            )
 
     return "\n\n---\n\n".join(parts)

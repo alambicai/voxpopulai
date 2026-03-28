@@ -92,14 +92,15 @@ async function _loadHistoryPage(search) {
 function _renderHistItem(session) {
   const topic = session.topic || session.question || "";
   const ts = session.timestamp ? _fmtTs(session.timestamp) : "";
-
+  const profile = session.population_profile || "";
+  
   return `
     <div class="history-item" data-collab-id="${_escapeHtml(session.collaboration_id)}">
-      <div class="history-item-icon">&#9745;</div>
+      <div class="history-item-icon">🗳️</div>
       <div class="history-item-info">
         <div class="history-item-topic">${_escapeHtml(topic)}</div>
         <div class="history-item-meta">
-          <span class="tag muted">Vote synthetique</span>
+          <span class="tag muted">${_escapeHtml(profile)}</span>
         </div>
       </div>
       <div class="history-item-time">${_escapeHtml(ts)}</div>
