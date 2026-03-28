@@ -82,7 +82,7 @@ async function _renderPersonasOverview(container) {
   if (stats.total === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">👤</div>
+        <div class="empty-state-icon">🗳️</div>
         <div>Aucun persona genere pour le moment.</div>
         <button class="btn btn-primary" onclick="_showGenerateModal()">Generer des personas</button>
       </div>`;

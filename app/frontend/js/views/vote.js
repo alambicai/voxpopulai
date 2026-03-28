@@ -2,6 +2,8 @@
  * Vote view — synthetic population voting.
  */
 
+const DEFAULT_PROFILE_ICON = "🗳️";
+
 function _escapeHtml(str) {
   if (!str) return "";
   const div = document.createElement("div");
@@ -95,7 +97,7 @@ async function renderVote() {
     }
     select.innerHTML = profiles.map((p, i) => `
       <option value="${_escapeHtml(p.name)}" ${i === 0 ? "selected" : ""}>
-        ${_escapeHtml(p.icon || "🗳️")} ${_escapeHtml(p.name)}
+        ${_escapeHtml(p.icon || DEFAULT_PROFILE_ICON)} ${_escapeHtml(p.name)}
       </option>
     `).join("");
   }).catch(() => {
