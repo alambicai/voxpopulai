@@ -1,338 +1,239 @@
-# Best Practices
+# Bonnes Pratiques de Développement
 
-## Development Workflow
+Standards de qualité pour le projet VoxPopulAI.
 
-### Git Workflow
+---
 
-1. **Branch from `dev`**: All feature branches originate from the `dev` branch
-2. **Branch naming**: `<issue_id>-<short-description>` (e.g., `42-add-user-auth`)
-3. **Commits**: Use Conventional Commits format:
-   - `feat(scope): description` - New feature
-   - `fix(scope): description` - Bug fix
-   - `refactor(scope): description` - Code refactoring
-   - `docs(scope): description` - Documentation changes
-   - `test(scope): description` - Test additions/changes
-   - `chore(scope): description` - Tooling, dependencies, config
-4. **Pull Requests**:
-   - Create as draft initially: `gh pr create --draft --base dev --fill`
-   - Mark "Ready for review" when complete
-   - Require at least one peer review
-   - CI must pass before merge
-5. **Merge**: Squash merge to keep history clean
-6. **Language**: All commits, code, comments, and documentation in **English**
+## 1. Structure du Projet
 
-### Code Quality Checklist
+### Architecture cible
 
-Before marking a PR as ready:
+```
+voxpopulai/
+├── app/
+│   ├── api/                      # FastAPI backend (point d'entrée)
+│   │   └── routes/
+│   │       ├── vote.py           # Endpoints vote
+│   │       ├── personas.py       # Endpoints personas
+│   │       ├── profiles.py       # Endpoints profils
+│   │       ├── history.py        # Endpoints historique
+│   │       ├── settings.py       # Endpoints configuration
+│   │       └── models.py         # Endpoints modèles Ollama
+│   │
+│   ├── frontend/                 # SPA vanilla JS
+│   │   ├── index.html
+│   │   ├── css/
+│   │   └── js/
+│   │       ├── app.js            # Entry point
+│   │       ├── router.js         # Hash routing
+│   │       ├── api.js            # API client + SSE
+│   │       └── views/            # Vote, Personas, History, Settings
+│   │
+│   ├── vote/                     # Logique métier vote
+│   │   ├── orchestrator.py       # Orchestration complète
+│   │   └── models.py             # Modèles Pydantic
+│   │
+│   ├── personas/                 # Système personas
+│   │   ├── generator.py          # Génération LLM
+│   │   ├── store.py              # SQLite persistence
+│   │   ├── name_generators.py    # Génération noms INSEE
+│   │   ├── models.py             # Modèle Persona
+│   │   └── data/                 # Données prénoms/patronymes
+│   │
+│   ├── profiles/                 # Profils population
+│   │   ├── registry.py           # Chargement JSON
+│   │   └── definitions/          # Fichiers profils
+│   │
+│   ├── llm/                      # Utilitaires LLM
+│   │   ├── queue.py              # File d'attente priorisée
+│   │   └── json_utils.py         # Extraction JSON
+│   │
+│   ├── events/                   # Audit trail
+│   │   └── event_log.py          # SQLite event log
+│   │
+│   ├── config.py                 # Configuration
+│   └── main.py                   # Entry point FastAPI
+│
+├── tests/                        # Tests
+│   ├── conftest.py              # Fixtures
+│   └── test_*.py                # Tests par module
+│
+├── data/                         # Runtime data (non versionné)
+│   ├── personas.db              # Base personas
+│   ├── events.db                # Base événements
+│   └── settings.json            # Configuration
+│
+├── docs/                         # Documentation
+│   ├── ARCHITECTURE.md
+│   ├── SPECS.md
+│   ├── ROADMAP.md
+│   └── BEST_PRACTICES.md
+│
+├── pyproject.toml               # Configuration projet
+├── .pre-commit-config.yaml      # Hooks pre-commit
+├── CLAUDE.md                    # Guide Claude Code
+└── README.md                    # Overview projet
+```
 
-- [ ] No commented-out code (use Git history instead)
-- [ ] No debug print statements or logging left behind
-- [ ] No hardcoded secrets or API keys
-- [ ] Unused imports removed
-- [ ] Code formatted with Ruff
-- [ ] All tests pass
-- [ ] Documentation updated (SPECS.md, ARCHITECTURE.md if applicable)
+**Règles** :
+- Organiser par domaine métier, pas par type technique
+- `vote/`, `personas/`, `profiles/` contiennent la logique métier
+- `api/routes/` est une couche mince qui délègue aux services
+- Frontend vanilla JS sans framework (SPA simple)
+- Un seul port exposé (:8000), FastAPI sert la SPA + l'API
 
-### Pre-commit Hooks
+---
 
-Required hooks are configured in `.pre-commit-config.yaml`:
+## 2. Configuration Centralisée
 
+### pyproject.toml
+
+```toml
+[project]
+name = "voxpopulai"
+version = "0.1.0"
+description = "Synthetic population voting simulator powered by LLMs"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "ollama>=0.4",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.8",
+    "pre-commit>=4.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "SIM"]
+ignore = [
+    "E501",  # Line too long - handled by formatter
+    "B008",  # Do not perform function calls in argument defaults (FastAPI Depends)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = ["-v", "--tb=short"]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 80
+```
+
+---
+
+## 3. Pre-commit Hooks
+
+### .pre-commit-config.yaml
+
+```yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.0
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+      - id: ruff-format
+```
+
+**Installation** :
 ```bash
-# Install hooks
 pip install pre-commit
 pre-commit install
-
-# Run on all files
 pre-commit run --all-files
 ```
 
-Hooks include:
-- Trailing whitespace removal
-- End of file fixer
-- YAML validation
-- Large files check (max 500KB)
-- Merge conflict detection
-- Private key detection
-
 ---
 
-## Code Style
+## 4. Types et Validation
 
-### Python Style Guide
+### Pydantic Models
 
-**Formatter**: Ruff (configured in `pyproject.toml`)
-
-**Key settings:**
-- Line length: 100 characters
-- Target Python version: 3.10+
-- Import sorting enabled
-
-**Patterns to follow:**
+Toutes les entrées/sorties API doivent utiliser Pydantic :
 
 ```python
-# Good: Type hints
-from typing import Optional, List
-def get_persona(persona_id: str) -> Optional[Persona]:
-    ...
-
-# Good: Pydantic models for data validation
 from pydantic import BaseModel, Field
 
 class VoteRequest(BaseModel):
-    profile_name: str
-    question: str
+    profile_name: str = Field(..., description="Nom du profil population")
+    question: str = Field(..., min_length=10, max_length=1000)
     count: int = Field(default=100, ge=1, le=1000)
+    models: List[str] = Field(default_factory=list)
 
-# Good: Async/await for I/O operations
-async def generate_persona(profile: Profile) -> Persona:
-    async with aiohttp.ClientSession() as session:
-        ...
-
-# Good: Descriptive variable names
-persona_count = len(personas)  # Not: pc = len(p)
-is_vote_complete = all(v.position for v in votes)  # Not: vc = all(...)
-
-# Good: Constants at module level
-MAX_PERSONA_GENERATION_RETRIES = 3
-DEFAULT_VOTE_COUNT = 100
-
-# Bad: Avoid
-x = 1  # Unclear variable name
-def func(a, b):  # Missing type hints
-    return a + b
+class Persona(BaseModel):
+    id: str
+    profile_name: str
+    name: str
+    attributes: Dict[str, str]
+    system_prompt: str
+    background: str
+    model: str
 ```
 
-### Import Organization
+### Type Hints
 
 ```python
-# 1. Standard library
-import json
-from datetime import datetime
-from typing import Dict, List, Optional
-
-# 2. Third-party packages
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-# 3. First-party (app)
-from app.config import settings
-from app.personas.models import Persona
-```
-
-Ruff's isort configuration handles this automatically.
-
-### Error Handling
-
-```python
-# Good: Specific exceptions with context
-from fastapi import HTTPException
-
-def get_profile(name: str) -> Profile:
-    try:
-        return registry.load(name)
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Profile '{name}' not found")
-    except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Invalid profile format: {e}")
-
-# Good: Graceful degradation
-async def llm_call_with_fallback(prompt: str) -> str:
-    try:
-        return await primary_llm.generate(prompt)
-    except LLMError:
-        logger.warning("Primary LLM failed, trying fallback")
-        return await fallback_llm.generate(prompt)
-```
-
----
-
-## Architecture Patterns
-
-### Dependency Injection
-
-Use FastAPI's dependency injection for shared resources:
-
-```python
-from fastapi import Depends
-
-async def get_persona_store() -> PersonaStore:
-    return PersonaStore(settings.persona_db_path)
-
-@app.get("/api/personas/")
-async def list_personas(store: PersonaStore = Depends(get_persona_store)):
-    return store.list_all()
-```
-
-### Repository Pattern
-
-Data access is abstracted through repository classes:
-
-```python
-# app/personas/store.py
-class PersonaStore:
-    def __init__(self, db_path: str):
-        self.db_path = db_path
-    
-    def get_by_id(self, persona_id: str) -> Optional[Persona]:
-        ...
-    
-    def sample(self, profile: str, count: int) -> List[Persona]:
-        ...
-    
-    def save(self, persona: Persona) -> None:
-        ...
-```
-
-### Service Layer
-
-Business logic lives in service modules, not routes:
-
-```python
-# app/vote/orchestrator.py (service layer)
-async def synthetic_population_vote(
-    profile_name: str,
-    question: str,
-    count: int,
-    models: List[str]
-) -> SyntheticVoteResult:
-    # Orchestration logic here
+# ✅ Fonctions publiques typées
+def generate_persona(
+    profile: Profile,
+    attributes: Dict[str, str],
+    model: str = "qwen3:14b"
+) -> Persona:
     ...
 
-# app/api/routes/vote.py (thin controller)
-@app.post("/api/vote/")
-async def create_vote(request: VoteRequest):
-    result = await synthetic_population_vote(
-        request.profile_name,
-        request.question,
-        request.count,
-        request.models
-    )
-    return result
+# ✅ Retours Optionnels
+def get_persona(persona_id: str) -> Optional[Persona]:
+    ...
+
+# ✅ Génériques
+from typing import List, Dict, Optional
 ```
 
 ---
 
-## LLM Integration Best Practices
+## 5. Tests
 
-### Prompt Engineering
-
-1. **Be explicit**: Clear instructions, expected output format
-2. **Provide examples**: Few-shot prompting for complex tasks
-3. **Use structured output**: JSON mode or explicit JSON instructions
-4. **Keep prompts focused**: One task per prompt
-5. **Version prompts**: Track prompt changes with performance impact
-
-**Example persona generation prompt structure:**
-```python
-PERSONA_GENERATION_PROMPT = """
-Create a realistic persona based on these demographic attributes:
-{attributes}
-
-Name: {name}
-
-Generate:
-1. Background (2-3 paragraphs about their life, values, experiences)
-2. System prompt (how they should respond as this persona)
-
-Return JSON:
-{
-  "background": "...",
-  "system_prompt": "..."
-}
-"""
-```
-
-### JSON Extraction
-
-LLM responses may include markdown or malformed JSON. Use the utility:
-
-```python
-from app.llm.json_utils import extract_json
-
-# Handles markdown code blocks, thinking tags, common JSON errors
-parsed = extract_json(llm_response_text)
-```
-
-### Retry Logic
-
-Always implement retries for LLM calls:
-
-```python
-from tenacity import retry, stop_after_attempt, wait_exponential
-
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type(LLMError)
-)
-async def generate_with_retry(prompt: str) -> str:
-    return await llm.generate(prompt)
-```
-
-### Queue Management
-
-The LLM queue prevents GPU overload:
-
-```python
-from app.llm.queue import llm_queue, Priority
-
-# HIGH: User-facing operations
-# MEDIUM: Background tasks
-# LOW: Bulk operations
-
-result = await llm_queue.submit(
-    prompt="...",
-    priority=Priority.HIGH,
-    model="qwen3:14b"
-)
-```
-
-### Model Selection Guidelines
-
-| Task | Recommended Model | Temperature |
-|------|-------------------|-------------|
-| Persona generation | qwen3:14b | 0.8 |
-| Quality validation | qwen3:14b | 0.1 |
-| Voting | qwen3:14b, llama3:8b | 0.7 |
-| Result analysis | qwen3:14b | 0.5 |
-
----
-
-## Testing
-
-### Test Structure
+### Structure
 
 ```
 tests/
-├── conftest.py              # Shared fixtures
-├── unit/
-│   ├── test_personas.py
-│   ├── test_vote.py
-│   └── test_profiles.py
-├── integration/
-│   └── test_api.py
-└── fixtures/
-    └── sample_profiles.json
-```
-
-### Test Naming
-
-```python
-# Pattern: test_<function>_<scenario>
-def test_vote_tally_with_all_positions():
-    ...
-
-def test_persona_generation_retries_on_failure():
-    ...
-
-def test_get_profile_returns_404_for_missing():
-    ...
+├── conftest.py               # Fixtures partagées
+├── test_vote.py             # Tests vote
+├── test_personas.py         # Tests personas
+└── test_profiles.py         # Tests profiles
 ```
 
 ### Fixtures
 
 ```python
-# tests/conftest.py
+# conftest.py
 import pytest
 from app.profiles.registry import ProfileRegistry
 
@@ -342,13 +243,20 @@ def sample_profile():
         "name": "test",
         "description": "Test profile",
         "attributes": {
-            "age": {"values": {"18-24": {"weight": 100}}}
+            "sexe": {
+                "values": {
+                    "F": {"weight": 50},
+                    "M": {"weight": 50}
+                }
+            }
         }
     }
 
 @pytest.fixture
-def profile_registry(tmp_path):
-    return ProfileRegistry(tmp_path)
+def persona_store(tmp_path):
+    from app.personas.store import PersonaStore
+    db_path = tmp_path / "test_personas.db"
+    return PersonaStore(str(db_path))
 ```
 
 ### Async Testing
@@ -357,39 +265,40 @@ def profile_registry(tmp_path):
 import pytest
 
 @pytest.mark.asyncio
-async def test_async_vote_generation():
-    result = await orchestrator.synthetic_population_vote(
+async def test_vote_generation(persona_store):
+    result = await synthetic_population_vote(
         profile_name="test",
         question="Test question?",
-        count=5
+        count=5,
+        store=persona_store
     )
     assert result.persona_count == 5
+    assert result.tally.oui + result.tally.non + result.tally.abstention == 5
 ```
 
-### Mocking External Services
+### Couverture
 
-```python
-from unittest.mock import Mock, patch
-
-@patch("app.llm.queue.llm_queue.submit")
-async def test_vote_with_mocked_llm(mock_submit):
-    mock_submit.return_value = '{"position": "oui", "reasoning": "Test"}'
-    
-    result = await orchestrator.synthetic_population_vote(...)
-    
-    assert mock_submit.called
-    assert result.tally.oui > 0
+```bash
+pytest tests/ --cov=app --cov-fail-under=80
 ```
 
 ---
 
-## Database Best Practices
+## 6. Database
 
 ### SQLite Patterns
 
 ```python
-# Connection management with context managers
-import sqlite3
+# ✅ Requêtes paramétrées UNIQUEMENT
+# JAMAIS de string interpolation ou concatenation
+
+# ❌ DANGEREUX - NEVER DO THIS
+cursor.execute(f"SELECT * FROM personas WHERE id = '{persona_id}'")
+
+# ✅ CORRECT
+cursor.execute("SELECT * FROM personas WHERE id = ?", (persona_id,))
+
+# ✅ Context managers pour les connexions
 from contextlib import contextmanager
 
 @contextmanager
@@ -400,34 +309,123 @@ def get_db_connection(db_path: str):
         yield conn
     finally:
         conn.close()
-
-# Parameterized queries (NEVER use string interpolation)
-def get_persona(persona_id: str) -> Optional[Persona]:
-    with get_db_connection(DB_PATH) as conn:
-        cursor = conn.execute(
-            "SELECT * FROM personas WHERE id = ?",
-            (persona_id,)  # Tuple with trailing comma
-        )
-        row = cursor.fetchone()
-        return Persona(**row) if row else None
 ```
-
-### Schema Migrations
-
-For now, schemas are created on startup. For production:
-
-1. Use Alembic for migration management
-2. Version all schema changes
-3. Test migrations against production-like data
 
 ---
 
-## Frontend Best Practices
+## 7. LLM Integration
 
-### JavaScript Patterns
+### Retry Logic
+
+```python
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type(LLMError)
+)
+async def generate_with_llm(prompt: str) -> str:
+    return await llm_queue.submit(prompt, priority=Priority.HIGH)
+```
+
+### JSON Extraction
+
+```python
+from app.llm.json_utils import extract_json
+
+# Le LLM peut renvoyer du markdown, des thinking blocks, etc.
+raw_response = await llm_queue.submit(prompt)
+parsed = extract_json(raw_response)  # Gère les cas d'erreur courants
+```
+
+### Queue Priorities
+
+```python
+from app.llm.queue import Priority
+
+# HIGH : Opérations utilisateur (vote streaming)
+# MEDIUM : Tâches de fond (analyse)
+# LOW : Génération bulk personas
+
+await llm_queue.submit(prompt, priority=Priority.HIGH, model="qwen3:14b")
+```
+
+---
+
+## 8. Git Workflow
+
+### Branch naming
+
+```
+<issue_id>-<short-description>
+
+Exemples :
+42-add-async-vote
+67-fix-persona-generation-timeout
+123-docs-update-api-specs
+```
+
+### Commits conventionnels
+
+```bash
+feat(vote): add async voting endpoint
+fix(personas): handle json parsing errors
+docs(api): update endpoint documentation
+refactor(llm): extract json utilities
+test(vote): add edge case tests
+chore(deps): update ruff to 0.8.0
+```
+
+### Workflow
+
+1. Créer une issue GitHub
+2. Créer une branche : `git checkout -b <issue>-<description>`
+3. Développer avec pre-commit actif
+4. Lancer les tests : `pytest tests/ -v`
+5. Commit avec format conventionnel
+6. Push et créer une PR liée à l'issue (`closes #N`)
+7. Merge quand CI verte + review OK
+8. Mettre à jour `ROADMAP.md`
+
+---
+
+## 9. Code Style
+
+### Python
+
+```python
+# ✅ Constantes en UPPER_CASE
+MAX_PERSONA_GENERATION_RETRIES = 3
+DEFAULT_VOTE_COUNT = 100
+
+# ✅ Noms explicites
+persona_count = len(personas)  # Pas: pc = len(p)
+is_vote_complete = all(v.position for v in votes)  # Pas: vc = all(...)
+
+# ✅ Docstrings pour fonctions publiques
+def compute_tally(votes: List[Vote]) -> VoteTally:
+    """
+    Calcule le décompte des votes.
+    
+    Args:
+        votes: Liste des votes avec position
+        
+    Returns:
+        VoteTally avec compte et pourcentages
+        
+    Raises:
+        ValueError: Si liste vide
+    """
+    if not votes:
+        raise ValueError("Cannot compute tally for empty list")
+    # ...
+```
+
+### JavaScript (Frontend)
 
 ```javascript
-// Module pattern with explicit exports
+// ✅ Modules avec exports explicites
 const ApiClient = {
     async getPersonas(profile, options = {}) {
         const params = new URLSearchParams({
@@ -445,231 +443,103 @@ const ApiClient = {
 };
 
 export default ApiClient;
-```
 
-### Event Handling
-
-```javascript
-// Delegate events for dynamic content
+// ✅ Event delegation pour contenu dynamique
 document.addEventListener('click', (e) => {
     if (e.target.matches('.delete-persona')) {
         const personaId = e.target.dataset.id;
         handleDelete(personaId);
     }
 });
-
-// Cleanup event listeners
-function createModal() {
-    const modal = document.createElement('div');
-    const closeHandler = () => modal.remove();
-    
-    modal.querySelector('.close').addEventListener('click', closeHandler);
-    
-    // Return cleanup function
-    return {
-        element: modal,
-        destroy() {
-            modal.querySelector('.close').removeEventListener('click', closeHandler);
-            modal.remove();
-        }
-    };
-}
-```
-
-### SSE (Server-Sent Events) Handling
-
-```javascript
-async function streamVote(request) {
-    const eventSource = new EventSource(`/api/vote/stream`, {
-        method: 'POST',
-        body: JSON.stringify(request)
-    });
-    
-    eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        switch (data.type) {
-            case 'progress':
-                updateProgress(data.percentage);
-                break;
-            case 'persona_vote':
-                addVoteToTable(data);
-                break;
-            case 'complete':
-                showResults(data);
-                eventSource.close();
-                break;
-            case 'error':
-                showError(data.message);
-                eventSource.close();
-                break;
-        }
-    };
-    
-    eventSource.onerror = () => {
-        showError('Connection lost');
-        eventSource.close();
-    };
-}
 ```
 
 ---
 
-## Security Best Practices
+## 10. Documentation
 
-### Input Validation
+### Quand mettre à jour
 
-All inputs validated through Pydantic models:
+| Changement | Document à mettre à jour |
+|------------|-------------------------|
+| Nouvel endpoint | SPECS.md, ARCHITECTURE.md |
+| Nouveau profil population | SPECS.md (section profils) |
+| Changement architecture | ARCHITECTURE.md, README.md |
+| Changement workflow dev | BEST_PRACTICES.md |
+| Feature complète | ROADMAP.md (cocher l'issue) |
 
-```python
-from pydantic import BaseModel, Field, validator
-
-class VoteRequest(BaseModel):
-    profile_name: str
-    question: str
-    count: int = Field(default=100, ge=1, le=1000)
-    
-    @validator('question')
-    def validate_question(cls, v):
-        if len(v) > 1000:
-            raise ValueError('Question too long (max 1000 chars)')
-        return v.strip()
-```
-
-### Environment Variables
+### Code documentation
 
 ```python
-# app/config.py
-from pydantic_settings import BaseSettings
+# ✅ Commentaires pour logique complexe uniquement
+# ✅ Pas de commentaires pour ce qui est évident
 
-class Settings(BaseSettings):
-    data_dir: str = "./data"
-    persona_db_path: str = "./data/personas.db"
-    
-    class Config:
-        env_prefix = ""  # No prefix for env vars
+# ❌ Inutile
+# Increment counter
+i += 1
 
-settings = Settings()
-```
-
-### No Secrets in Code
-
-```bash
-# .gitignore
-data/
-*.db
-.env
-settings.json
-```
-
-### CORS Configuration
-
-```python
-# Restrict origins in production
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Not ["*"]
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
-)
+# ✅ Utile
+# Retry avec backoff exponentiel pour gérer les rate limits
+# tout en évitant de surcharger le GPU
 ```
 
 ---
 
-## Performance Optimization
+## 11. Interdictions
 
-### Database
-
-- Add indexes for frequently queried columns
-- Use connection pooling for concurrent requests
-- Cache expensive queries (Redis/memcached)
-
-### LLM Calls
-
-- Batch similar requests when possible
-- Cache persona generation results
-- Use lower temperature for deterministic tasks
-- Implement request deduplication
-
-### Frontend
-
-- Lazy load persona data (pagination)
-- Debounce input handlers
-- Use CSS transforms for animations
-- Minimize DOM updates
+| ❌ Interdit | ✅ Alternative |
+|-------------|--------------|
+| String interpolation SQL | Requêtes paramétrées avec `?` |
+| Hardcoded secrets | Variables d'environnement |
+| Code mort en commentaire | Supprimer, Git garde l'historique |
+| `print()` pour debug | Logging structuré |
+| Fonctions > 50 lignes | Refactoring en sous-fonctions |
+| Imports non utilisés | `ruff --fix` |
+| Tests qui appellent vraiment Ollama | Mocker `llm_queue.submit` |
+| Couverture < 80% | Ajouter des tests |
 
 ---
 
-## Documentation
+## 12. Checklist PR
 
-### Code Documentation
+Avant de demander une review :
+
+- [ ] Tests passent (`pytest tests/ -v`)
+- [ ] Pre-commit OK (`pre-commit run --all-files`)
+- [ ] Code review par soi-même (diff complet)
+- [ ] PR liée à une issue GitHub (`closes #N`)
+- [ ] Documentation mise à jour si nécessaire
+- [ ] Pas de logique métier dans `api/routes/`
+- [ ] Pas de secrets ou credentials
+- [ ] Variables et fonctions bien nommées
+- [ ] Pas de code commenté inutile
+
+---
+
+## 13. Conventions spécifiques
+
+### Langue
+
+- **Documentation** : Français
+- **Code (variables, fonctions)** : Anglais
+- **Messages utilisateur** : Français
+- **Logs** : Anglais (sauf erreurs spécifiques)
+
+### Organisation des imports
 
 ```python
-def calculate_tally(votes: List[Vote]) -> VoteTally:
-    """
-    Calculate vote tally from a list of votes.
-    
-    Args:
-        votes: List of Vote objects with position and reasoning
-        
-    Returns:
-        VoteTally with counts and percentages for each position
-        
-    Raises:
-        ValueError: If votes list is empty
-        
-    Example:
-        >>> votes = [Vote(position="oui", ...), Vote(position="non", ...)]
-        >>> tally = calculate_tally(votes)
-        >>> assert tally.oui == 1
-    """
-    if not votes:
-        raise ValueError("Cannot calculate tally for empty vote list")
-    
-    # Implementation...
+# 1. Standard library
+import json
+from datetime import datetime
+from typing import Dict, List, Optional
+
+# 2. Third-party
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+# 3. First-party (app)
+from app.config import settings
+from app.personas.models import Persona
+from app.vote.models import Vote
 ```
 
-### README Updates
-
-Update README.md when:
-- New features added
-- Setup instructions change
-- Dependencies updated
-- Architecture changes
-
-### API Documentation
-
-FastAPI auto-generates OpenAPI docs at `/docs`. Ensure:
-- All routes have descriptive docstrings
-- Pydantic models have field descriptions
-- Response models are explicitly defined
-
----
-
-## Common Pitfalls
-
-### LLM Integration
-
-- **Assuming perfect JSON**: Always validate and have fallback parsing
-- **Ignoring token limits**: Monitor context window usage
-- **No timeout handling**: LLM calls can hang; implement timeouts
-- **Blocking the event loop**: Use async/await properly
-
-### Database
-
-- **Connection leaks**: Always use context managers
-- **N+1 queries**: Batch queries when possible
-- **No transaction handling**: Use transactions for multi-step operations
-
-### Async Code
-
-- **Mixing sync and async**: Use `asyncio.to_thread()` for CPU-bound tasks
-- **Forgetting await**: Enable mypy to catch missing awaits
-- **Race conditions**: Use locks for shared mutable state
-
-### Frontend
-
-- **Memory leaks**: Clean up event listeners and timers
-- **XSS vulnerabilities**: Sanitize user input before DOM insertion
-- **Race conditions**: Cancel pending requests on new user actions
+(Ruff isort gère ça automatiquement)

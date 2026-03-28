@@ -1,143 +1,274 @@
-# Architecture
+# VoxPopulAI - Architecture
 
-## Overview
+## Vue d'ensemble
 
-VoxPopulAI is a synthetic population voting simulator powered by Large Language Models (LLMs). It enables the simulation of voting scenarios by generating artificial personas based on demographic profiles, having these personas vote on questions, and analyzing results with qualitative insights.
-
-## System Architecture
-
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                       INTERFACES                                │
+│                                                                 │
+│   SPA vanilla JS (servi par FastAPI)                            │
+│   ├── Vote (création, streaming, résultats)                     │
+│   ├── Personas (génération, stats, distributions)               │
+│   ├── History (sessions passées, audit)                         │
+│   └── Settings (modèles LLM, paramètres)                          │
+│                                                                 │
+│   FastAPI backend (:8000)                                       │
+│   ├── REST : /api/vote/ (sync + SSE stream + async)             │
+│   ├── REST : /api/personas/ (CRUD + génération SSE)             │
+│   ├── REST : /api/profiles/ (liste profils)                     │
+│   ├── REST : /api/history/ (sessions + audit)                   │
+│   ├── REST : /api/settings/ (configuration)                     │
+│   └── Static files (sert la SPA)                                │
+│                                                                 │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+┌──────────────────────────┼──────────────────────────────────────┐
+│                    SERVICES LAYER                                │
+│                          │                                       │
+│   ┌──────────────────────┴───────────────────────┐                 │
+│   │              Voting System                  │                 │
+│   │  • vote/orchestrator.py : logique complète  │                 │
+│   │  • vote/models.py : modèles Pydantic        │                 │
+│   │  • 3 modes : sync, stream (SSE), async      │                 │
+│   └──────────┬───────────────────────┬──────────┘                 │
+│              │                       │                           │
+│   ┌──────────┴──────┐   ┌───────────┴───────────┐                │
+│   │  Persona Gen.   │   │   LLM Queue            │                │
+│   │  • generator.py │   │   • Priorité HIGH/     │                │
+│   │  • store.py     │   │     MEDIUM/LOW         │                │
+│   │  • name_gen.    │   │   • Sérialisation GPU │                │
+│   └─────────────────┘   └───────────┬───────────┘                │
+│                                      │                            │
+│   ┌──────────────────────────────────┴──────────────────────┐  │
+│   │                      Personas System                       │  │
+│   │  • Persistance SQLite (personas.db)                        │  │
+│   │  • Génération nom réaliste (INSEE)                         │  │
+│   │  • Validation qualité par LLM juge                        │  │
+│   └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│   ┌──────────────────────┐   ┌───────────────────────┐         │
+│   │   Profiles Registry    │   │  Event Log            │         │
+│   │   • JSON auto-découverts│   │  • Audit sessions     │         │
+│   │   • Distribution poids │   │  • SQLite (events.db) │         │
+│   │   • Échantillonnage    │   │  • Cross-tab analysis │         │
+│   └──────────────────────┘   └───────────────────────┘         │
+│                                                                  │
+└──────────────────────┬───────────────────────────────────────────┘
+                       │
+           ┌────────────┼────────────────┐
+           ▼            ▼                ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│   SQLite     │ │   Ollama     │ │   Settings   │
+│  personas.db │ │   (:11434)   │ │  settings.json│
+│  events.db   │ │              │ │              │
+└──────────────┘ └──────────────┘ └──────────────┘
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Client (Browser)                      │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐         │
-│  │  Vote   │  │ Personas│  │ History │  │Settings │         │
-│  └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘         │
-│       └─────────────┴─────────────┴─────────────┘              │
-│                        │                                     │
-│                    REST API / SSE                            │
-└────────────────────────┼────────────────────────────────────┘
-                         │
-┌────────────────────────┼────────────────────────────────────┐
-│                   FastAPI Backend                            │
-│  ┌─────────────────────┼─────────────────────────────────┐  │
-│  │                 API Layer                              │  │
-│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐    │  │
-│  │  │  Vote   │ │Personas │ │ History │ │ Settings│    │  │
-│  │  │ Routes  │ │ Routes  │ │ Routes  │ │ Routes  │    │  │
-│  │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘    │  │
-│  └───────┼───────────┼───────────┼───────────┼─────────┘  │
-│          │           │           │           │              │
-│  ┌───────┴───────────┴───────────┴───────────┴─────────┐  │
-│  │              Business Logic Layer                     │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │  │
-│  │  │   Voting    │  │   Persona   │  │    Event    │  │  │
-│  │  │ Orchestrator│  │  Generator  │  │     Log     │  │  │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  │  │
-│  └─────────┼────────────────┼────────────────┼────────┘  │
-│            │                │                │             │
-│  ┌─────────┴────────────────┴────────────────┴─────────┐  │
-│  │              Infrastructure Layer                     │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  │  │
-│  │  │  LLM Queue  │  │ Profile     │  │  Settings   │  │  │
-│  │  │  (Ollama)   │  │  Registry   │  │   Store     │  │  │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘  │  │
-│  └─────────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────────┘
-                         │
-┌────────────────────────┼────────────────────────────────────┐
-│                   Data Layer                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ personas.db │  │  events.db  │  │   settings.json     │  │
-│  │  (SQLite)   │  │   (SQLite)  │  │       (JSON)        │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-└──────────────────────────────────────────────────────────────┘
-                         │
-┌────────────────────────┼────────────────────────────────────┐
-│                   External Services                          │
-│                    Ollama (LLM API)                            │
-└──────────────────────────────────────────────────────────────┘
+
+---
+
+## Structure des fichiers
+
+```text
+voxpopulai/
+├── README.md
+├── CLAUDE.md
+├── ARCHITECTURE.md
+├── SPECS.md
+├── ROADMAP.md
+├── BEST_PRACTICES.md
+├── pyproject.toml
+├── .pre-commit-config.yaml
+│
+├── app/
+│   ├── main.py                   # Entry point FastAPI
+│   ├── config.py                 # Settings management
+│   │
+│   ├── api/                      # FastAPI routes
+│   │   └── routes/
+│   │       ├── vote.py           # Vote endpoints (sync/stream/async)
+│   │       ├── personas.py       # Persona CRUD + generation
+│   │       ├── profiles.py       # Profile listing
+│   │       ├── history.py        # Session history + audit
+│   │       ├── settings.py       # Configuration endpoints
+│   │       └── models.py         # Ollama models listing
+│   │
+│   ├── frontend/                 # SPA vanilla JS
+│   │   ├── index.html
+│   │   ├── css/style.css
+│   │   └── js/
+│   │       ├── app.js            # Entry point
+│   │       ├── router.js         # Hash routing
+│   │       ├── api.js            # API client + SSE
+│   │       ├── ui-helper.js
+│   │       └── views/
+│   │           ├── vote.js       # Vote UI
+│   │           ├── personas.js   # Persona management
+│   │           ├── history.js    # Session history
+│   │           └── settings.js   # Configuration UI
+│   │
+│   ├── vote/                     # Voting logic
+│   │   ├── orchestrator.py       # Main voting orchestration
+│   │   └── models.py             # Pydantic models (Vote, Tally, Analysis)
+│   │
+│   ├── personas/                 # Persona system
+│   │   ├── models.py             # Persona Pydantic model
+│   │   ├── generator.py          # LLM-based generation
+│   │   ├── store.py              # SQLite persistence
+│   │   ├── name_generators.py    # French name generation (INSEE)
+│   │   └── data/                 # Name data files
+│   │       ├── prenoms.json
+│   │       └── patronymes.json
+│   │
+│   ├── profiles/                 # Population profiles
+│   │   ├── registry.py           # Profile loading
+│   │   └── definitions/          # JSON profile definitions
+│   │       ├── grand_public_france.json
+│   │       ├── experts.json
+│   │       ├── developpeurs.json
+│   │       └── donjon_et_dragon.json
+│   │
+│   ├── llm/                      # LLM utilities
+│   │   ├── queue.py              # Priority queue for Ollama
+│   │   └── json_utils.py         # JSON extraction from responses
+│   │
+│   └── events/                   # Audit trail
+│       └── event_log.py          # SQLite event logging
+│
+├── tests/                        # Test suite
+│   └── (test files...)
+│
+└── data/                         # Runtime data
+    ├── personas.db               # Generated personas
+    ├── events.db                 # Session events
+    └── settings.json             # App configuration
 ```
 
-## Core Components
+---
 
-### 1. API Layer (`app/api/routes/`)
+## Flux de données
 
-RESTful API endpoints organized by domain:
+### Vote complet (mode streaming SSE)
 
-- **Vote Routes** (`vote.py`): Orchestrates synthetic voting sessions
-- **Personas Routes** (`personas.py`): Manages generated personas
-- **Profiles Routes** (`profiles.py`): Lists available population profiles
-- **History Routes** (`history.py`): Provides session audit and reconstruction
-- **Settings Routes** (`settings.py`): Manages application configuration
-- **Models Routes** (`models.py`): Lists available Ollama models
+```text
+SPA (frontend)
+    │
+    ├── API.stream("/api/vote/stream", body, onEvent)
+    │   └── fetch POST → ReadableStream → parse SSE "data: {...}\n\n"
+    │
+    ▼
+FastAPI StreamingResponse (text/event-stream)
+    │
+    ├── synthetic_vote_stream() generator
+    │   │
+    │   ├── Phase 1 — Personas (0-40%)
+    │   │   ├── store.sample(profile, count) → personas existants
+    │   │   └── si manquant → generator.generate_personas_iter()
+    │   │       └── pour chaque persona :
+    │   │           ├── registry.sample_attributes() → attributs pondérés
+    │   │           ├── name_generator.generate() → nom réaliste
+    │   │           ├── _create_persona() → appel LLM (retry + fallback)
+    │   │           └── yield {"phase": "personas", "current": N, "total": T}
+    │   │
+    │   ├── Phase 2 — Votes (40-90%)
+    │   │   └── pour chaque persona :
+    │   │       ├── _cast_vote() → appel LLM avec system_prompt du persona
+    │   │       ├── Position : OUI / NON / ABSTENTION
+    │   │       ├── Raisonnement texte libre
+    │   │       └── yield {"phase": "votes", "current": N, "total": T}
+    │   │
+    │   ├── Phase 3 — Analyse (90-100%)
+    │   │   ├── yield {"phase": "analysis"}
+    │   │   ├── _compute_tally() → décompte OUI/NON/ABSTENTION
+    │   │   └── _analyze_votes() → appel LLM analyse qualitative
+    │   │       ├── Position dominante + marge
+    │   │       ├── Arguments clés (pour/contre)
+    │   │       ├── Patterns démographiques
+    │   │       └── Niveau consensus
+    │   │
+    │   └── yield {"phase": "done", "result": SyntheticVoteResult}
+    │
+    ▼
+SPA : barre de progression déterministe + résultat final
+```
 
-### 2. Business Logic Layer
+### Génération de personas
 
-#### Voting System (`app/vote/`)
+```text
+Profile Registry (JSON)
+    │
+    ├── Load profile definition
+    │   └── dimensions : sexe, age, CSP, région...
+    │   └── poids : distribution réaliste (INSEE)
+    │
+    ▼
+Persona Generator
+    │
+    ├── Pour chaque persona à générer :
+    │   │
+    │   ├── 1. Sample attributes
+    │   │   └── profile.sample() → {sexe: "F", age: "35-49", CSP: "Cadre"...}
+    │   │
+    │   ├── 2. Generate name
+    │   │   ├── name_generator.sample_first_name(sexe, decade)
+    │   │   └── name_generator.sample_last_name()
+    │   │   └── → "Marie Dubois"
+    │   │
+    │   ├── 3. LLM Generation
+    │   │   ├── Prompt : "Crée un persona français..."
+    │   │   ├── Input : attributs + nom
+    │   │   └── Output JSON : {background, system_prompt, values...}
+    │   │
+    │   ├── 4. Quality validation (optionnel)
+    │   │   ├── Judge model évalue la qualité
+    │   │   ├── Si rejeté → retry (max 3)
+    │   │   └── Sinon → persistance
+    │   │
+    │   └── 5. Persist to SQLite
+    │       └── INSERT INTO personas (id, profile_name, name, attributes...)
+    │
+    ▼
+personas.db (SQLite)
+```
 
-The `orchestrator.py` implements the core voting workflow:
+### Audit et historique
 
-1. **Persona Generation/Loading**: Load existing personas or generate new ones from a profile
-2. **Individual Voting**: Each persona votes independently with position (oui/non/abstention) and reasoning
-3. **Tally Computation**: Aggregate votes into counts and percentages
-4. **Qualitative Analysis**: LLM analyzes results for key arguments and demographic patterns
+```text
+Vote Session
+    │
+    ├── Event Log (SQLite events.db)
+    │   ├── collaboration_start → session_id, timestamp, question
+    │   ├── persona_vote → persona_id, position, reasoning
+    │   ├── ... (repeat pour chaque vote)
+    │   └── collaboration_end → tally, analysis
+    │
+    ▼
+History API
+    │
+    ├── GET /api/history/ → liste sessions paginée
+    ├── GET /api/history/{id} → session complète (reconstruction)
+    └── GET /api/history/{id}/audit → cross-tab par attribut
+        │
+        └── Crosstabulation :
+            ├── Par sexe : F {oui: 45, non: 12...}, M {...}
+            ├── Par age : 18-24 {...}, 25-34 {...}
+            └── Par CSP : Cadre {...}, Ouvrier {...}
+```
 
-Supports three execution modes:
-- **Synchronous**: Blocking request, returns complete result
-- **Streaming**: Server-Sent Events with progress updates
-- **Asynchronous**: Background execution with status polling
+---
 
-#### Persona System (`app/personas/`)
+## Persistance
 
-Three main components:
+| Donnée | Format | Emplacement | Description |
+| ------ | ------ | ----------- | ----------- |
+| Personas | SQLite | `data/personas.db` | Personas générés avec attributs et prompts |
+| Events | SQLite | `data/events.db` | Audit trail des sessions de vote |
+| Settings | JSON | `data/settings.json` | Configuration modèles et paramètres |
+| Profils | JSON | `app/profiles/definitions/` | Définitions des profils population |
+| Noms INSEE | JSON | `app/personas/data/` | Données prénoms et patronymes |
 
-- **`generator.py`**: LLM-based persona creation with quality validation
-  - Samples attribute combinations from profile weights
-  - Generates rich persona (name, background, values, vision, traits)
-  - Uses "judge" model for quality validation with retry logic
-  
-- **`store.py`**: SQLite persistence layer for personas
-  - CRUD operations
-  - Random sampling for voting sessions
-  - Statistics and distribution queries
-  
-- **`name_generators.py`**: Realistic name generation for French personas
-  - Uses INSEE demographic data
-  - Considers gender, birth decade, and religion context
+### Schémas SQLite
 
-#### Events System (`app/events/`)
-
-`event_log.py` provides audit trail functionality:
-- SQLite-based event storage
-- Collaboration tracking (start/end events)
-- Session reconstruction from event stream
-- Cross-tabulation audit for demographic analysis
-
-### 3. Infrastructure Layer
-
-#### LLM Integration (`app/llm/`)
-
-- **`queue.py`**: Priority queue for Ollama API calls
-  - Serializes GPU access to prevent overload
-  - Priority levels: HIGH, MEDIUM, LOW
-  - Async worker with thread pool executor
-  
-- **`json_utils.py`**: LLM response parsing utilities
-  - Strips `<thinking>` blocks from reasoning models
-  - Extracts JSON from markdown code blocks
-  - Fixes malformed JSON (unescaped quotes, etc.)
-
-#### Profile Registry (`app/profiles/`)
-
-`registry.py` manages population profile definitions:
-- Loads JSON profile definitions from `definitions/`
-- Provides weighted random sampling for persona generation
-- Four built-in profiles: grand_public_france, experts, developpeurs, donjon_et_dragon
-
-### 4. Data Layer
-
-#### personas.db
-SQLite database storing generated personas with schema:
+**personas.db :**
 ```sql
 CREATE TABLE personas (
     id TEXT PRIMARY KEY,
@@ -149,10 +280,10 @@ CREATE TABLE personas (
     model TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
+CREATE INDEX idx_personas_profile ON personas (profile_name);
 ```
 
-#### events.db
-SQLite database for audit trail:
+**events.db :**
 ```sql
 CREATE TABLE events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -164,213 +295,102 @@ CREATE TABLE events (
     model TEXT,
     data TEXT NOT NULL  -- JSON
 );
+CREATE INDEX idx_events_collab_id ON events (collaboration_id);
+CREATE INDEX idx_events_type_ts ON events (type, timestamp);
 ```
 
-#### settings.json
-JSON file storing application configuration:
-- Synthetic vote settings (models, temperatures, retries)
-- Ollama runtime parameters (context window, sampling params)
+---
 
-## Data Flow
+## Sécurité
 
-### Voting Session Flow
+| Mécanisme | Implémentation |
+|-----------|----------------|
+| Injection SQL | Requêtes paramétrées uniquement (jamais de string interpolation) |
+| Validation | Pydantic models pour toutes les entrées API |
+| Secrets | Variables d'environnement ou settings.json (non versionné) |
+| CORS | Configurable, restrictions en production |
+| Path traversal | Pas d'accès filesystem depuis l'API (tout en DB) |
 
-```
-┌──────────┐     ┌──────────────┐     ┌─────────────────┐
-│  Client  │────▶│ POST /vote/  │────▶│   Orchestrator  │
-└──────────┘     └──────────────┘     └────────┬────────┘
-                                               │
-                    ┌──────────────────────────┼──────────┐
-                    │                          │          │
-           ┌────────▼────────┐        ┌───────▼───────┐  │
-           │  Profile Registry│        │  Persona Store │  │
-           │  (Load Definition)│        │  (Load/Sample) │  │
-           └────────┬────────┘        └───────┬───────┘  │
-                    │                          │          │
-                    └──────────┬───────────────┘          │
-                               │                          │
-                    ┌──────────▼──────────┐               │
-                    │   Persona Generator │               │
-                    │  (if not in store)  │               │
-                    └──────────┬──────────┘               │
-                               │                          │
-                    ┌──────────▼──────────┐               │
-                    │     LLM Queue       │               │
-                    │   (Ollama API)      │               │
-                    └──────────┬──────────┘               │
-                               │                          │
-                               ▼                          ▼
-                    ┌─────────────────────────────────────┐
-                    │      Individual Voting (Parallel)   │
-                    │  ┌─────────┐ ┌─────────┐ ┌────────┐ │
-                    │  │Persona 1│ │Persona 2│ │  ...   │ │
-                    │  └────┬────┘ └────┬────┘ └───┬────┘ │
-                    └───────┼───────────┼──────────┼──────┘
-                            └───────────┴──────────┘
-                                          │
-                               ┌──────────▼──────────┐
-                               │    Vote Tally       │
-                               │  (Aggregate Results) │
-                               └──────────┬──────────┘
-                                          │
-                               ┌──────────▼──────────┐
-                               │   LLM Analysis      │
-                               │ (Qualitative Insights)│
-                               └──────────┬──────────┘
-                                          │
-                               ┌──────────▼──────────┐
-                               │   Event Log         │
-                               │ (Audit Trail)       │
-                               └──────────┬──────────┘
-                                          │
-                               ┌──────────▼──────────┐
-                               │  Response to Client  │
-                               └─────────────────────┘
+---
+
+## Dépendances externes
+
+```text
+VoxPopulAI (:8000) ──── Ollama (:11434)
+                           └── Modèles LLM pour :
+                               ├── Génération personas
+                               ├── Vote individuel
+                               └── Analyse résultats
 ```
 
-### Persona Generation Flow
+**Ollama** est le seul service externe obligatoire. Tout est local (SQLite, pas de Redis ni de services cloud).
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────────┐
-│   Profile    │────▶│   Sample     │────▶│  Attribute Combo │
-│  Definition  │     │   Weights    │     │  (e.g., age, CSP) │
-└──────────────┘     └──────────────┘     └────────┬─────────┘
-                                                   │
-                          ┌────────────────────────┘
-                          │
-               ┌──────────▼──────────┐
-               │  Name Generator     │
-               │  (Demographic Data) │
-               └──────────┬──────────┘
-                          │
-               ┌──────────▼──────────┐
-               │  LLM Generator      │
-               │  (Persona Prompt)    │
-               └──────────┬──────────┘
-                          │
-               ┌──────────▼──────────┐
-               │  JSON Extraction    │
-               │  (Parse Response)   │
-               └──────────┬──────────┘
-                          │
-               ┌──────────▼──────────┐
-               │  Quality Judge      │
-               │  (Validation)       │
-               └──────────┬──────────┘
-                          │
-               ┌──────────▼──────────┐
-               │  Persona Store      │
-               │  (Persist)          │
-               └─────────────────────┘
+---
+
+## Modèles de données principaux
+
+### Persona
+
+```python
+class Persona(BaseModel):
+    id: str                          # UUID v4
+    profile_name: str               # ex: "grand_public_france"
+    name: str                       # "Marie Dubois"
+    attributes: Dict[str, str]      # {sexe: "F", age: "35-49", CSP: "Cadre"...}
+    system_prompt: str               # Prompt système pour le LLM
+    background: str                  # Background textuel
+    model: str                       # LLM utilisé pour la génération
+    created_at: datetime
 ```
 
-## Authentication & Security
+### Vote
 
-- **No authentication layer**: The application is designed for local/single-user use
-- **CORS**: Configured for development (localhost origins)
-- **Input validation**: Pydantic models validate all API inputs
-- **No secrets in code**: Environment variables for configuration
-
-## Frontend Architecture
-
-Vanilla JavaScript SPA (Single Page Application):
-
+```python
+class Vote(BaseModel):
+    persona: Persona                 # Référence au persona
+    position: Literal["oui", "non", "abstention"]
+    reasoning: str                   # Raisonnement détaillé
 ```
+
+### VoteResult
+
+```python
+class SyntheticVoteResult(BaseModel):
+    profile_name: str
+    question: str
+    persona_count: int
+    tally: VoteTally                 # {oui: N, non: N, abstention: N}
+    analysis: VoteAnalysis           # Insights qualitatifs
+    disclaimer: str                  # Avertissement simulation
+    collaboration_id: Optional[str]  # UUID pour audit
+```
+
+---
+
+## Stratégie de file d'attente LLM
+
+```text
 ┌─────────────────────────────────────────┐
-│              index.html                  │
-│  ┌─────────────────────────────────────┐│
-│  │          JavaScript Layer            ││
-│  │  ┌─────────┐ ┌─────────┐ ┌────────┐││
-│  │  │  app.js │ │router.js│ │ api.js │││
-│  │  │(Entry)  │ │(Routing)│ │(Client)│││
-│  │  └────┬────┘ └────┬────┘ └───┬────┘││
-│  │       └─────────────┴─────────┘      ││
-│  │                │                     ││
-│  │       ┌────────▼────────┐            ││
-│  │       │   View Layer     │            ││
-│  │  ┌────┴────┐ ┌────┴────┐ ┌────┴───┐ ││
-│  │  │ vote.js │ │personas.│ │history.│ ││
-│  │  │(Voting) │ │   js    │ │  js    │ ││
-│  │  └─────────┘ └─────────┘ └────────┘ ││
-│  │       ┌─────────────────┐            ││
-│  │       │  settings.js    │            ││
-│  │       │  (Configuration) │            ││
-│  │       └─────────────────┘            ││
-│  └─────────────────────────────────────┘│
-│  ┌─────────────────────────────────────┐│
-│  │           CSS Layer                  ││
-│  │       style.css (Dark Theme)       ││
-│  └─────────────────────────────────────┘│
+│           LLM Queue                     │
+│  ┌─────────────────────────────────┐   │
+│  │ Priority Queue (asyncio)      │   │
+│  │                               │   │
+│  │ HIGH    │ Vote streaming      │   │
+│  │ MEDIUM  │ Analyse résultats   │   │
+│  │ LOW     │ Bulk persona gen.   │   │
+│  └─────────────────────────────────┘   │
+│              │                          │
+│              ▼                          │
+│  ┌──────────────────────────────┐    │
+│  │ Worker (asyncio)             │    │
+│  │                              │    │
+│  │ While queue not empty:       │    │
+│  │   1. Pop highest priority    │    │
+│  │   2. Call Ollama API         │    │
+│  │   3. Return result           │    │
+│  │   4. Process next            │    │
+│  └──────────────────────────────┘    │
 └─────────────────────────────────────────┘
 ```
 
-### Key Frontend Patterns
-
-- **Hash-based routing**: URL fragments determine current view
-- **Event-driven updates**: API responses trigger UI updates
-- **Streaming support**: Server-Sent Events for real-time progress
-- **State management**: Simple object-based state in app.js
-
-## Deployment Architecture
-
-### Development
-
-```
-┌────────────────────────────────────────┐
-│           Local Machine                 │
-│  ┌──────────┐      ┌──────────────────┐ │
-│  │  Ollama  │◄────►│  VoxPopulAI API  │ │
-│  │ (GPU)    │      │  (Uvicorn/FastAPI)│ │
-│  └──────────┘      └──────────────────┘ │
-│                           │              │
-│                    ┌──────┴──────┐       │
-│                    │  Browser    │       │
-│                    │  (Frontend) │       │
-│                    └─────────────┘       │
-└────────────────────────────────────────┘
-```
-
-### Production (Recommended)
-
-```
-┌────────────────────────────────────────┐
-│           Docker Compose               │
-│  ┌──────────┐      ┌──────────────────┐│
-│  │  Ollama  │◄────►│  VoxPopulAI API  ││
-│  │ Service  │      │   Service        ││
-│  └──────────┘      └──────────────────┘│
-│                           │            │
-│  ┌────────────────────────┴──────────┐ │
-│  │        Reverse Proxy (Nginx)       │ │
-│  │    (Static files + API proxy)      │ │
-│  └────────────────────────────────────┘ │
-└────────────────────────────────────────┘
-```
-
-## Scaling Considerations
-
-### Current Limitations
-
-- **Single-node Ollama**: GPU-bound inference
-- **SQLite databases**: File-based, not distributed
-- **In-memory queue**: No persistence across restarts
-
-### Potential Improvements
-
-1. **Model serving**: Scale Ollama horizontally with model replication
-2. **Database**: Migrate to PostgreSQL for concurrent access
-3. **Queue**: Implement Redis or RabbitMQ for distributed task processing
-4. **Caching**: Add Redis layer for persona and vote result caching
-
-## Monitoring & Observability
-
-Currently minimal:
-- Event log provides audit trail
-- LLM queue has basic logging
-- No metrics collection or alerting
-
-Recommendations:
-- Add structured logging (JSON format)
-- Implement Prometheus metrics
-- Add health check endpoints
-- Monitor LLM API latency and error rates
+La file d'attente sérialise les appels LLM pour éviter la surcharge GPU.

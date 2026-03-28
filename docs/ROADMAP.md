@@ -1,275 +1,223 @@
-# Roadmap
+# VoxPopulAI - Roadmap
 
-## Current Status
+> **Tout développement doit être rattaché à une issue GitHub.**
 
-**Version**: 0.1.0  
-**Phase**: MVP Complete - Core functionality operational
+---
 
-## Completed Features
+## MVP (Complete)
 
-### Core Voting System
-- [x] Synchronous voting endpoint
-- [x] Streaming voting with SSE progress
-- [x] Asynchronous voting with status polling
-- [x] Vote tally computation
-- [x] LLM-based qualitative analysis
-- [x] Session audit trail (events.db)
+Fonctionnalités core extraites du projet ATEAM et stabilisées.
 
-### Persona Management
-- [x] Persona generation from demographic profiles
-- [x] SQLite persistence (personas.db)
-- [x] Name generation with French demographic data
-- [x] Quality validation with judge model
-- [x] Persona statistics and distribution queries
+<details>
+<summary>Terminé (core features)</summary>
 
-### Population Profiles
-- [x] Profile registry system
-- [x] grand_public_france profile (INSEE data)
-- [x] experts profile (multidisciplinary panel)
-- [x] developpeurs profile (software developers)
-- [x] donjon_et_dragon profile (D&D adventurers)
+### Voting System
+- [x] Vote synchrone (POST /api/vote/) — extraction depuis ATEAM
+- [x] Vote streaming SSE (POST /api/vote/stream)
+- [x] Vote asynchrone (POST /api/vote/async)
+- [x] Orchestration complète (personas → votes → analyse)
+- [x] Modèles Pydantic (Vote, Tally, Analysis, Result)
 
-### LLM Integration
-- [x] Ollama API client
-- [x] Priority queue for GPU management
-- [x] JSON extraction from LLM responses
-- [x] Retry logic with exponential backoff
+### Persona System
+- [x] Génération LLM avec attributs pondérés
+- [x] Persistance SQLite (personas.db)
+- [x] Génération de noms réalistes (INSEE)
+- [x] Validation qualité par LLM juge
+- [x] Store avec CRUD et échantillonnage
 
-### Frontend
-- [x] Vanilla JavaScript SPA
-- [x] Hash-based routing
-- [x] Vote creation and viewing
-- [x] Persona management interface
-- [x] Session history browser
-- [x] Settings configuration
-- [x] Real-time progress via SSE
+### Profiles
+- [x] Registry avec auto-découverte JSON
+- [x] Profil grand_public_france (INSEE)
+- [x] Profil experts (multidisciplinaire)
+- [x] Profil developpeurs (tech industry)
+- [x] Profil donjon_et_dragon (D&D)
 
 ### Infrastructure
-- [x] FastAPI application structure
-- [x] Pydantic data models
-- [x] Settings persistence (JSON)
-- [x] Pre-commit hooks
-- [x] Ruff linting configuration
-- [x] Pytest configuration
+- [x] FastAPI backend avec routes
+- [x] SPA vanilla JS (Vote, Personas, History, Settings)
+- [x] File d'attente LLM priorisée
+- [x] Extraction JSON des réponses
+- [x] Event Log SQLite (audit trail)
 
 ### Documentation
-- [x] ARCHITECTURE.md
-- [x] SPECS.md
-- [x] BEST_PRACTICES.md
-- [x] ROADMAP.md (this file)
+- [x] README avec quick start
+- [x] CLAUDE.md guide développement
+- [x] ARCHITECTURE.md diagrammes ASCII
+- [x] SPECS.md scénarios et API
+- [x] BEST_PRACTICES.md standards
+- [x] ROADMAP.md (ce fichier)
+
+</details>
 
 ---
 
-## In Progress
+## Phase 1 — Tests & Qualité (En cours)
 
-None currently.
+> Couverture 80%+, CI/CD, robustesse
 
----
+### Testing
+- [ ] Tests unitaires vote/orchestrator.py
+- [ ] Tests unitaires personas/generator.py
+- [ ] Tests unitaires personas/store.py
+- [ ] Tests unitaires profiles/registry.py
+- [ ] Tests unitaires llm/queue.py
+- [ ] Tests unitaires llm/json_utils.py
+- [ ] Tests API endpoints (FastAPI TestClient)
+- [ ] CI/CD GitHub Actions (pytest, ruff, pre-commit)
+- [ ] Coverage badge dans README
 
-## Upcoming Features
+### Robustesse
+- [ ] Circuit breaker pour Ollama API (retry + fallback)
+- [ ] Timeouts configurables pour LLM calls
+- [ ] Gestion gracieuse des erreurs Ollama (modèle manquant, GPU overload)
+- [ ] Validation des settings au startup
+- [ ] Health check endpoint (/health)
 
-### Phase 1: Stability & Polish (Next 2-4 weeks)
-
-#### Testing & Quality
-- [ ] Unit tests for core modules (vote, personas, profiles)
-- [ ] Integration tests for API endpoints
-- [ ] Test coverage reporting (target: 80%)
-- [ ] CI/CD pipeline with GitHub Actions
-- [ ] Load testing for concurrent voting sessions
-
-#### Error Handling & Reliability
-- [ ] Better error messages for LLM failures
-- [ ] Circuit breaker pattern for Ollama API
-- [ ] Database connection pooling
-- [ ] Graceful shutdown handling
-- [ ] Request timeout management
-
-#### Frontend Improvements
-- [ ] Loading states for all async operations
-- [ ] Error toast notifications
-- [ ] Mobile responsiveness improvements
-- [ ] Dark/light theme toggle
-- [ ] Keyboard shortcuts
-
-### Phase 2: Enhanced Features (1-2 months)
-
-#### Advanced Voting
-- [ ] Weighted voting (demographic weighting)
-- [ ] Multi-question surveys
-- [ ] Conditional logic (branching questions)
-- [ ] Time-based voting (simulate opinion evolution)
-- [ ] Export results (CSV, JSON, PDF)
-
-#### Persona Enhancements
-- [ ] Persona editing interface
-- [ ] Custom profile creation UI
-- [ ] Import/export profiles (JSON)
-- [ ] Persona preview before voting
-- [ ] Persona clustering (find similar personas)
-
-#### Analysis & Visualization
-- [ ] Interactive charts (Chart.js or D3)
-- [ ] Demographic breakdown visualizations
-- [ ] Word cloud from vote reasoning
-- [ ] Sentiment analysis of opinions
-- [ ] Compare multiple sessions side-by-side
-
-### Phase 3: Scale & Integration (2-3 months)
-
-#### Database Migration
-- [ ] PostgreSQL support
-- [ ] Database migration system (Alembic)
-- [ ] Read replicas for queries
-- [ ] Backup and restore utilities
-
-#### API & Integration
-- [ ] Webhook support for vote completion
-- [ ] API rate limiting
-- [ ] API key authentication
-- [ ] OpenAPI documentation improvements
-- [ ] GraphQL endpoint (optional)
-
-#### LLM Enhancements
-- [ ] Multi-model ensemble voting
-- [ ] Support for commercial APIs (OpenAI, Anthropic)
-- [ ] Local model caching
-- [ ] Prompt versioning and A/B testing
-- [ ] Fine-tuning support for custom personas
-
-### Phase 4: Enterprise Features (3-6 months)
-
-#### Multi-tenancy
-- [ ] Organization/workspaces
-- [ ] User authentication (OAuth, SSO)
-- [ ] Role-based access control
-- [ ] Resource quotas per organization
-
-#### Collaboration
-- [ ] Share sessions via public links
-- [ ] Comments on voting sessions
-- [ ] Collaborative profile editing
-- [ ] Team voting (aggregate team opinions)
-
-#### Advanced Analytics
-- [ ] Trend analysis across sessions
-- [ ] Statistical significance testing
-- [ ] Predictive modeling
-- [ ] Custom report builder
-
-### Phase 5: Platform Extensions (6+ months)
-
-#### Deployment Options
-- [ ] Docker Compose production setup
-- [ ] Kubernetes manifests
-- [ ] Cloud deployment guides (AWS, GCP, Azure)
-- [ ] Managed hosting option
-
-#### Plugin System
-- [ ] Custom persona generators
-- [ ] Custom analysis modules
-- [ ] Integration plugins (Slack, Discord, etc.)
-- [ ] Webhook plugins
-
-#### Mobile
-- [ ] React Native or Flutter app
-- [ ] Push notifications for async votes
-- [ ] Offline mode with sync
+### Frontend
+- [ ] Tests de bout en bout (Playwright ou Cypress)
+- [ ] Gestion erreurs réseau (retry, feedback utilisateur)
+- [ ] Loading states pour toutes les opérations async
+- [ ] Toast notifications pour succès/erreurs
+- [ ] Responsive design improvements
 
 ---
 
-## Technical Debt
+## Phase 2 — Features Vote (À planifier)
 
-### Current Items
+> Améliorations du système de vote
 
-- [ ] `tests/` directory is empty - need comprehensive test suite
-- [ ] No database migrations - manual schema updates
-- [ ] Hardcoded French names only - need internationalization
-- [ ] SQLite file locking issues with concurrent writes
-- [ ] Frontend uses vanilla JS - consider framework (React/Vue)
-- [ ] No caching layer for expensive operations
-- [ ] Limited observability (no metrics, basic logging)
+### Analyse
+- [ ] Visualisations charts (Chart.js ou D3)
+  - [ ] Répartition votes (pie/bar)
+  - [ ] Cross-tabs par attribut (stacked bar)
+  - [ ] Word cloud des raisonnements
+- [ ] Export résultats (CSV, JSON, PDF)
+- [ ] Comparaison sessions (diff entre 2 votes)
 
-### Refactoring Opportunities
-
-- [ ] Extract common API patterns into base classes
-- [ ] Create abstract LLM provider interface
-- [ ] Implement proper dependency injection container
-- [ ] Add database abstraction layer (SQLAlchemy?)
-- [ ] Refactor frontend into component-based structure
+### Vote avancé
+- [ ] Vote pondéré (poids démographiques)
+- [ ] Multi-questions (sondage complet)
+- [ ] Vote conditionnel (si X alors question Y)
+- [ ] Historique temporel (évolution opinion)
 
 ---
 
-## Research & Exploration
+## Phase 3 — Personas & Profiles (À planifier)
 
-### Potential Directions
+> Améliorations génération personas
 
-- **Reinforcement Learning**: Train models to better simulate specific demographics
-- **Agent-based Simulation**: Multi-round interactions between personas
-- **Real-time Collaboration**: WebSocket-based live voting sessions
-- **Blockchain Integration**: Immutable vote records (probably overkill)
-- **Voice/Video Personas**: Generate audio/video responses
+### Personas
+- [ ] Interface édition persona (UI)
+- [ ] Duplication persona
+- [ ] Tags/categories personas
+- [ ] Recherche personas par attributs
+- [ ] Clustering personas (similarité)
 
-### LLM Research
-
-- [ ] Evaluate newer models (Llama 3.1, Qwen 2.5, etc.)
-- [ ] Test smaller models for cost/performance balance
-- [ ] Prompt optimization experiments
-- [ ] Bias detection and mitigation
-- [ ] Hallucination reduction techniques
-
----
-
-## Bug Tracking
-
-### Known Issues
-
-- [ ] #1 - SSE connection drops on long-running votes (>5 min)
-- [ ] #2 - Memory leak in persona generation with large counts
-- [ ] #3 - Judge model occasionally rejects valid personas
-- [ ] #4 - Cross-tab audit slow with 1000+ personas
-- [ ] #5 - Frontend doesn't handle 503 errors gracefully
+### Profiles
+- [ ] UI création profil custom
+- [ ] Import/export profils (JSON)
+- [ ] Profils internationaux (US, UK, DE...)
+- [ ] Profils historiques (France 1950, 1980...)
 
 ---
 
-## Release Planning
+## Phase 4 — Scale & Production (À planifier)
 
-### v0.2.0 - Testing & Stability
-**Target**: 1 month  
-**Focus**: Test coverage, error handling, reliability
+> Prêt pour usage production
 
-### v0.3.0 - Enhanced Voting
-**Target**: 2 months  
-**Focus**: Weighted voting, surveys, exports
+### Database
+- [ ] Support PostgreSQL (optionnel)
+- [ ] Migrations Alembic
+- [ ] Connection pooling
+- [ ] Backup automatique personas.db
 
-### v0.4.0 - Analysis & Visualization
-**Target**: 3 months  
-**Focus**: Charts, reports, comparisons
+### Performance
+- [ ] Cache personas fréquemment utilisés
+- [ ] Batch LLM calls quand possible
+- [ ] Compression events.db (rotation)
+- [ ] Monitoring temps de réponse
 
-### v1.0.0 - Production Ready
-**Target**: 6 months  
-**Focus**: PostgreSQL, auth, enterprise features
+### Sécurité
+- [ ] Rate limiting API
+- [ ] API key authentication (optionnel)
+- [ ] CORS strict en production
+- [ ] Audit complet (qui a fait quoi)
 
 ---
 
-## Contribution Guidelines
+## Phase 5 — Documentation & Community (À planifier)
 
-Want to help? Priority areas:
+> Ressources pour utilisateurs
 
-1. **Testing**: Write unit tests for existing code
-2. **Documentation**: Improve inline docs and examples
-3. **Profiles**: Create new population profiles
-4. **Frontend**: UI/UX improvements
-5. **Performance**: Profiling and optimization
+### Documentation utilisateur
+- [ ] Guide utilisateur complet
+- [ ] Tutoriels vidéo (screencasts)
+- [ ] FAQ
+- [ ] Troubleshooting guide
 
-See `BEST_PRACTICES.md` for development workflow.
+### Profils communautaires
+- [ ] Repository de profils publics
+- [ ] Template profil standardisé
+- [ ] Documentation création profils
+
+### Intégrations
+- [ ] API REST documentée (OpenAPI/Swagger UI amélioré)
+- [ ] Webhooks (notification vote terminé)
+- [ ] Export vers Google Sheets/Excel
+
+---
+
+## Idées à explorer
+
+### Non priorisé — à évaluer
+
+- **Multi-modèles** : Vote avec ensemble de modèles (consensus LLM)
+- **Personas vocaux** : Génération audio des opinions (TTS)
+- **Debate mode** : Personas qui débattent entre eux avant de voter
+- **Évolution** : Personas dont l'opinion évolue avec le temps
+- **Analyse sémantique** : Clustering automatique des arguments
+- **Prédiction** : Scoring de confiance sur la prédiction
 
 ---
 
 ## Notes
 
-- This roadmap is aspirational and subject to change based on user feedback
-- Items marked with 🎯 are high priority
-- Security features prioritized before v1.0
-- Mobile app considered for post-v1.0
+### Versionnement
 
-**Last Updated**: March 27, 2024
+Suivre [Semantic Versioning](https://semver.org/) :
+- `0.1.0` — MVP (actuel)
+- `0.2.0` — Tests & CI/CD
+- `0.3.0` — Features vote avancées
+- `0.4.0` — Personas & profiles améliorés
+- `1.0.0` — Production ready
+
+### Branches
+
+- `main` — Stable, releases
+- `dev` — Intégration features
+- `issue-XXX-description` — Feature branches
+
+### Process
+
+1. Créer/prendre une issue
+2. Brancher depuis `dev` : `git checkout -b issue-XXX-desc`
+3. Développer avec tests
+4. PR vers `dev` avec `closes #XXX`
+5. Review + merge
+6. Mise à jour ROADMAP.md
+7. Release tag quand prêt
+
+---
+
+## Métriques cibles
+
+| Métrique | Cible v1.0 | Actuel |
+|----------|-----------|--------|
+| Couverture tests | 80% | ~0% |
+| Issues ouvertes | < 10 | - |
+| Temps vote 100 personas | < 2 min | ~3 min |
+| Uptime (si déployé) | 99.9% | N/A |
+
+---
+
+**Last Updated** : March 2024

@@ -1,13 +1,164 @@
-# Specifications
+# VoxPopulAI - Spécifications
+
+> Simulateur de vote par population synthétique propulsé par LLM.
+
+---
+
+## Pourquoi VoxPopulAI
+
+VoxPopulAI permet d'**explorer les opinions** d'une population simulée avant de prendre des décisions importantes, de valider des intuitions sur les tendances démographiques, ou simplement de comprendre comment différents profils perçoivent un sujet.
+
+### Cas d'usage
+
+| Besoin | Comment |
+| ------ | ------- |
+| **Sondage avant référendum** | Simuler 1000 citoyens sur une question de société |
+| **Validation produit** | Tester la réaction de développeurs à une nouvelle feature |
+| **Worldbuilding** | Simuler un vote dans l'univers D&D (quartier des nains vs elfes) |
+| **Éducation** | Comprendre les clivages sociétaux sur des sujets historiques |
+| **Veille** | Explorer les opinions de différentes populations sur un sujet émergent |
+
+### Bénéfices
+
+- **Rapide** : Obtenir des insights en minutes, pas en semaines de sondage
+- **Contrôlé** : Tester différentes populations (âge, CSP, région) indépendamment
+- **Explicatif** : Chaque vote inclut un raisonnement, pas juste un chiffre
+- **Audit** : Traçabilité complète des décisions de chaque persona
+- **Local** : Pas de données externes, tout tourne sur votre machine
+
+---
+
+## Scénarios illustrés
+
+### Scénario 1 — "Référendum sur les smartphones à l'école"
+
+```
+Toi : "Faut-il interdire les smartphones dans les écoles ?"
+
+→ Profil : grand_public_france
+→ Nombre de personas : 500
+→ Question : "Faut-il interdire les smartphones dans les écoles ?"
+
+VoxPopulAI :
+  Phase 1 — Génération : 500 personas avec attributs réalistes
+  Phase 2 — Vote : chaque persona vote avec son contexte propre
+  
+  Exemples de votes :
+  
+  Marie Dubois (45 ans, cadre, 2 enfants) :
+    Position : OUI
+    Raisonnement : "En tant que mère, je vois l'addiction aux écrans.
+                    Mes enfants sont déjà trop connectés."
+  
+  Lucas Martin (22 ans, étudiant) :
+    Position : NON  
+    Raisonnement : "C'est un outil pédagogique. Les interdire c'est
+                    nier l'évolution technologique."
+  
+  Résultat :
+    OUI : 67% (335 votes)
+    NON : 23% (115 votes)
+    ABSTENTION : 10% (50 votes)
+  
+  Analyse qualitative :
+    Position dominante : OUI (marge +44%)
+    Arguments OUI : "Addiction", "Distraction", "Violence scolaire"
+    Arguments NON : "Outil pédagogique", "Digital native", "Urgences"
+    Patterns : Les parents d'enfants favorables +66%, 18-24 ans opposés
+
+Résultat : une vision nuancée avec arguments des deux côtés.
+```
+
+### Scénario 2 — "Validation d'une feature tech"
+
+```
+Toi : "Est-ce que les développeurs accepteraient un déploiement
+        automatique sans review ?"
+
+→ Profil : developpeurs
+→ Nombre : 100
+→ Question : "Êtes-vous favorable au déploiement automatique sans
+              review humaine pour les hotfixes critiques ?"
+
+VoxPopulAI :
+  Phase 1 — Génération : 100 devs avec niveaux d'expérience variés
+  Phase 2 — Vote : consultation des personas
+  
+  Exemples :
+  
+  Senior DevOps (12 ans exp) :
+    Position : OUI (avec conditions)
+    Raisonnement : "Si tests auto complets + rollback instantané,
+                    c'est plus sûr qu'un humain pressé à 3h du mat."
+  
+  Junior Frontend (2 ans exp) :
+    Position : NON
+    Raisonnement : "Trop risqué. J'ai déjà cassé la prod en pensant
+                    que mon fix était simple. Review obligatoire."
+  
+  Lead Architect (15 ans exp) :
+    Position : ABSTENTION
+    Raisonnement : "Dépend du contexte. Hotfix oui, feature non.
+                    Trop nuancé pour une réponse binaire."
+
+  Résultat :
+    OUI : 35% (mais majoritairement "avec conditions")
+    NON : 45%
+    ABSTENTION : 20%
+  
+  Patterns démographiques :
+    - Seniorité inversement corrélée avec opposition
+    - DevOps plus favorables que développeurs frontend
+    - Ceux qui ont connu des outages majeurs opposés
+
+Résultat : le consensus n'existe pas, implémentation risquée.
+```
+
+### Scénario 3 — "Vote dans l'univers D&D"
+
+```
+Toi : "Le conseil des guildes doit-il autoriser la magie nécromancienne
+        dans la ville de Waterdeep ?"
+
+→ Profil : donjon_et_dragon
+→ Nombre : 50
+→ Contexte : Faerûn, D&D 5e
+
+VoxPopulAI génère 50 aventuriers :
+- 5 paladins (Loyal Bon) → majoritairement CONTRE
+- 8 magiciens (dont 2 nécromanciens) → majoritairement POUR  
+- 3 clercs de Kelemvor → FERMEMENT CONTRE
+- 6 roublards → majoritairement ABSTENTION (pas leur problème)
+- etc.
+
+Résultat :
+  OUI : 30% (magiciens, certains warlocks)
+  NON : 55% (paladins, clercs, rôdeurs)
+  ABSTENTION : 15% (roublards, barbares)
+
+Analyse :
+  Position dominante : NON (marge 25%)
+  Argument clé OUI : "Contrôler la mort ≠ la malédiction"
+  Argument clé NON : "Ouvrir la porte au culte du serpent"
+  Pattern : Alignement détermine 80% des votes
+
+Usage : scénario de campagne avec tensions politiques réalistes.
+```
+
+---
 
 ## API Endpoints
 
-### Vote Endpoints (`/api/vote`)
+### Vote
 
-#### POST `/api/vote/`
-Run a synchronous synthetic population vote.
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/api/vote/` | POST | Vote synchrone (blocking) |
+| `/api/vote/stream` | POST | Vote avec streaming SSE |
+| `/api/vote/async` | POST | Vote asynchrone (background) |
+| `/api/vote/{id}/status` | GET | Statut vote async |
 
-**Request Body:**
+**POST /api/vote/** — Request:
 ```json
 {
   "profile_name": "grand_public_france",
@@ -17,7 +168,7 @@ Run a synchronous synthetic population vote.
 }
 ```
 
-**Response:**
+**POST /api/vote/** — Response:
 ```json
 {
   "profile_name": "grand_public_france",
@@ -44,99 +195,31 @@ Run a synchronous synthetic population vote.
     ],
     "consensus_level": "modere"
   },
-  "disclaimer": "Cette simulation est générée par IA et ne reflète pas nécessairement l'opinion réelle de la population.",
+  "disclaimer": "Cette simulation est générée par IA...",
   "collaboration_id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-**Error Responses:**
-- `400`: Invalid profile name or parameters
-- `422`: Validation error (missing required fields)
-- `500`: Internal server error during vote processing
-
-#### POST `/api/vote/stream`
-Run a vote with Server-Sent Events streaming for real-time progress updates.
-
-**Request Body:** Same as `/api/vote/`
-
-**Response:** SSE stream with event types:
-- `progress`: `{ "type": "progress", "current": 5, "total": 100, "percentage": 5.0 }`
-- `persona_vote`: `{ "type": "persona_vote", "persona_id": "...", "position": "oui", "reasoning": "..." }`
-- `complete`: Final result object (same as `/api/vote/` response)
-- `error`: `{ "type": "error", "message": "..." }`
-
-#### POST `/api/vote/async`
-Start an asynchronous vote that runs in the background.
-
-**Request Body:** Same as `/api/vote/`
-
-**Response:**
-```json
-{
-  "collaboration_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "pending"
-}
-```
-
-#### GET `/api/vote/{collaboration_id}/status`
-Get the status of an asynchronous vote.
-
-**Response:**
-```json
-{
-  "collaboration_id": "550e8400-e29b-41d4-a716-446655440000",
-  "status": "completed",
-  "progress": {
-    "current": 100,
-    "total": 100,
-    "percentage": 100.0
-  },
-  "result": { ... }  // Complete result if finished
-}
-```
-
-Status values: `pending`, `running`, `completed`, `failed`
+**SSE Events** (streaming):
+- `{"type": "progress", "phase": "personas", "current": 45, "total": 100}`
+- `{"type": "progress", "phase": "votes", "current": 67, "total": 100}`
+- `{"type": "vote", "persona_id": "...", "position": "oui", "reasoning": "..."}`
+- `{"type": "complete", "result": {...}}`
 
 ---
 
-### Personas Endpoints (`/api/personas`)
+### Personas
 
-#### GET `/api/personas/`
-List stored personas with pagination.
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/api/personas/` | GET | Liste personas (paginé) |
+| `/api/personas/generate` | POST | Génération batch |
+| `/api/personas/generate/stream` | POST | Génération SSE |
+| `/api/personas/stats` | GET | Stats globales |
+| `/api/personas/distribution/{profile}` | GET | Distribution attributs |
+| `/api/personas/{profile}` | DELETE | Suppression par profil |
 
-**Query Parameters:**
-- `profile` (optional): Filter by profile name
-- `limit` (default: 50): Number of results
-- `offset` (default: 0): Pagination offset
-
-**Response:**
-```json
-{
-  "personas": [
-    {
-      "id": "uuid",
-      "profile_name": "grand_public_france",
-      "name": "Marie Dubois",
-      "attributes": {
-        "sexe": "F",
-        "age": "45-54",
-        "csp": "Cadre",
-        "habitat": "urbain"
-      },
-      "model": "qwen3:14b",
-      "created_at": "2024-03-27T10:30:00Z"
-    }
-  ],
-  "total": 150,
-  "limit": 50,
-  "offset": 0
-}
-```
-
-#### POST `/api/personas/generate`
-Generate new personas for a profile.
-
-**Request Body:**
+**POST /api/personas/generate** — Request:
 ```json
 {
   "profile_name": "grand_public_france",
@@ -146,231 +229,29 @@ Generate new personas for a profile.
 }
 ```
 
-**Response:**
-```json
-{
-  "generated": 50,
-  "personas": [ ... ]  // Array of generated persona objects
-}
-```
-
-#### POST `/api/personas/generate/stream`
-Generate personas with SSE streaming progress.
-
-**Request Body:** Same as `/api/personas/generate`
-
-**SSE Events:**
-- `persona_generated`: Individual persona as generated
-- `progress`: Generation progress
-- `complete`: Final summary
-- `error`: Error information
-
-#### GET `/api/personas/stats`
-Get global statistics about stored personas.
-
-**Response:**
-```json
-{
-  "total_personas": 500,
-  "by_profile": {
-    "grand_public_france": 300,
-    "experts": 100,
-    "developpeurs": 100
-  },
-  "by_model": {
-    "qwen3:14b": 400,
-    "llama3:8b": 100
-  }
-}
-```
-
-#### GET `/api/personas/distribution/{profile_name}`
-Get attribute distribution for a profile.
-
-**Response:**
-```json
-{
-  "profile_name": "grand_public_france",
-  "distributions": {
-    "sexe": {
-      "F": 52,
-      "M": 48
-    },
-    "age": {
-      "18-24": 12,
-      "25-34": 18,
-      "35-49": 25,
-      "50-64": 28,
-      "65+": 17
-    },
-    "csp": {
-      "Agriculteur": 2,
-      "Artisan": 6,
-      "Cadre": 15,
-      "Profession intermédiaire": 24,
-      "Employé": 28,
-      "Ouvrier": 15,
-      "Retraité": 10
-    }
-  }
-}
-```
-
-#### GET `/api/personas/{profile_name}/models`
-Get models used for a specific profile.
-
-**Response:**
-```json
-{
-  "profile_name": "grand_public_france",
-  "models": ["qwen3:14b", "llama3:8b"]
-}
-```
-
-#### DELETE `/api/personas/{profile_name}`
-Delete all personas for a profile.
-
-**Response:** `204 No Content`
-
-#### DELETE `/api/personas/{profile_name}/model/{model}`
-Delete personas for a profile generated with a specific model.
-
-**Response:** `204 No Content`
-
-#### DELETE `/api/personas/{profile_name}/attribute`
-Delete personas matching specific attributes.
-
-**Request Body:**
-```json
-{
-  "attributes": {
-    "sexe": "F",
-    "age": "18-24"
-  }
-}
-```
-
-**Response:** `204 No Content`
-
 ---
 
-### Profiles Endpoints (`/api/profiles`)
+### History
 
-#### GET `/api/profiles/`
-List all available population profiles.
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/api/history/` | GET | Liste sessions |
+| `/api/history/{id}` | GET | Session complète |
+| `/api/history/{id}/audit` | GET | Audit cross-tab |
 
-**Response:**
+**GET /api/history/{id}/audit** — Response:
 ```json
 {
-  "profiles": [
-    {
-      "name": "grand_public_france",
-      "description": "Population française adulte représentative (2024)",
-      "attribute_count": 9,
-      "total_weight": 100
-    },
-    {
-      "name": "experts",
-      "description": "Panel multidisciplinaire d'experts",
-      "attribute_count": 5,
-      "total_weight": 50
-    },
-    {
-      "name": "developpeurs",
-      "description": "Développeurs logiciels",
-      "attribute_count": 4,
-      "total_weight": 30
-    },
-    {
-      "name": "donjon_et_dragon",
-      "description": "Groupe d'aventuriers D&D 5e",
-      "attribute_count": 6,
-      "total_weight": 5
-    }
-  ]
-}
-```
-
----
-
-### History Endpoints (`/api/history`)
-
-#### GET `/api/history/`
-List voting sessions with pagination.
-
-**Query Parameters:**
-- `limit` (default: 20): Number of results
-- `offset` (default: 0): Pagination offset
-
-**Response:**
-```json
-{
-  "sessions": [
-    {
-      "collaboration_id": "550e8400-e29b-41d4-a716-446655440000",
-      "timestamp": "2024-03-27T10:30:00Z",
-      "profile_name": "grand_public_france",
-      "question": "Faut-il interdire les smartphones dans les écoles ?",
-      "persona_count": 100,
-      "tally": {
-        "oui": 67,
-        "non": 23,
-        "abstention": 10
-      }
-    }
-  ],
-  "total": 50,
-  "limit": 20,
-  "offset": 0
-}
-```
-
-#### GET `/api/history/{collaboration_id}`
-Reconstruct a complete voting session.
-
-**Response:**
-```json
-{
-  "collaboration_id": "550e8400-e29b-41d4-a716-446655440000",
-  "timestamp": "2024-03-27T10:30:00Z",
-  "profile_name": "grand_public_france",
-  "question": "Faut-il interdire les smartphones dans les écoles ?",
-  "votes": [
-    {
-      "persona": { ... },
-      "position": "oui",
-      "reasoning": "Les smartphones sont une source de distraction..."
-    }
-  ],
-  "tally": { ... },
-  "analysis": { ... }
-}
-```
-
-#### GET `/api/history/{collaboration_id}/audit`
-Get cross-tabulation audit for demographic analysis.
-
-**Response:**
-```json
-{
-  "collaboration_id": "550e8400-e29b-41d4-a716-446655440000",
-  "question": "Faut-il interdire les smartphones dans les écoles ?",
+  "collaboration_id": "550e8400-...",
+  "question": "Faut-il interdire...",
   "crosstabs": {
     "sexe": {
-      "F": { "oui": 35, "non": 12, "abstention": 5 },
-      "M": { "oui": 32, "non": 11, "abstention": 5 }
+      "F": {"oui": 35, "non": 12, "abstention": 5},
+      "M": {"oui": 32, "non": 11, "abstention": 5}
     },
     "age": {
-      "18-24": { "oui": 5, "non": 6, "abstention": 1 },
-      "25-34": { "oui": 10, "non": 6, "abstention": 2 }
-    }
-  },
-  "metadata": {
-    "total_votes": 100,
-    "attribute_coverage": {
-      "sexe": 100,
-      "age": 98,
-      "csp": 95
+      "18-24": {"oui": 5, "non": 6, "abstention": 1},
+      "25-34": {"oui": 10, "non": 6, "abstention": 2}
     }
   }
 }
@@ -378,12 +259,118 @@ Get cross-tabulation audit for demographic analysis.
 
 ---
 
-### Settings Endpoints (`/api/settings`)
+### Profiles & Settings
 
-#### GET `/api/settings/`
-Get current application settings.
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/api/profiles/` | GET | Liste profils disponibles |
+| `/api/settings/` | GET/PUT | Configuration |
+| `/api/models/` | GET | Modèles Ollama disponibles |
 
-**Response:**
+---
+
+## Modèles de données
+
+### Persona
+
+```python
+class Persona(BaseModel):
+    id: str                          # UUID
+    profile_name: str               # ex: "grand_public_france"
+    name: str                       # "Marie Dubois"
+    attributes: Dict[str, str]       # Dimensions sociodémographiques
+    system_prompt: str               # Prompt système LLM
+    background: str                  # Histoire et contexte
+    model: str                      # LLM de génération
+```
+
+### Vote
+
+```python
+class Vote(BaseModel):
+    persona: Persona
+    position: Literal["oui", "non", "abstention"]
+    reasoning: str                   # Raisonnement détaillé
+```
+
+### Profile
+
+```json
+{
+  "name": "grand_public_france",
+  "description": "Population française adulte représentative",
+  "attributes": {
+    "sexe": {
+      "values": {
+        "F": {"weight": 52, "description": "Femme"},
+        "M": {"weight": 48, "description": "Homme"}
+      }
+    },
+    "age": {
+      "values": {
+        "18-24": {"weight": 12},
+        "25-34": {"weight": 18},
+        "35-49": {"weight": 25},
+        "50-64": {"weight": 28},
+        "65+": {"weight": 17}
+      }
+    }
+  }
+}
+```
+
+---
+
+## Profils de population intégrés
+
+### grand_public_france
+
+**Source** : Données INSEE 2024
+
+**Dimensions** (9 attributs) :
+- `sexe` : F (52%), M (48%)
+- `age` : 18-24 (12%), 25-34 (18%), 35-49 (25%), 50-64 (28%), 65+ (17%)
+- `csp` : Agriculture (2%), Artisan (6%), Cadre (15%), Profession intermédiaire (24%), Employé (28%), Ouvrier (15%), Retraité (10%)
+- `habitat` : Urbain (75%), Periurbain (15%), Rural (10%)
+- `education` : Sans diplôme (8%), CAP/BEP (16%), Bac (22%), Bac+2 (20%), Bac+3/4 (18%), Bac+5+ (16%)
+- `situation_familiale` : Célibataire (35%), Marié(e) (45%), Divorcé(e) (10%), Veuf/Veuve (5%), Pacsé(e) (5%)
+- `nb_enfants` : 0 (40%), 1 (20%), 2 (25%), 3+ (15%)
+- `sensibilite_politique` : Extrême gauche (5%), Gauche (20%), Centre (25%), Droite (25%), Extrême droite (15%), Sans opinion (10%)
+- `religion` : Catholique pratiquant (8%), Catholique non pratiquant (35%), Athée/Agnostique (35%), Musulman (8%), Autre (14%)
+
+### experts
+
+**Dimensions** (5 attributs) :
+- `expertise_domain` : Tech, Science, Économie, Droit, Santé
+- `seniority` : Junior, Senior, Expert
+- `institution_type` : Université, Entreprise, Publique, Indépendant
+- `geography` : Europe, Amérique du Nord, Asie, Autre
+- `publication_record` : Aucune, Modérée, Importante
+
+### developpeurs
+
+**Dimensions** (4 attributs) :
+- `experience_level` : Junior (35%), Senior (40%), Lead (20%), Architect (5%)
+- `primary_language` : Python (30%), JavaScript (25%), Java (15%), Go (10%), Rust (8%), Autre (12%)
+- `company_type` : Startup (35%), Enterprise (40%), Agency (15%), Freelance (10%)
+- `remote_work` : 100% remote (30%), Hybride (50%), Sur site (20%)
+
+### donjon_et_dragon
+
+**Dimensions** (6 attributs) — D&D 5e, Forgotten Realms :
+- `race` : Humain (35%), Elfe (20%), Nain (15%), Halfelin (10%), Demi-elfe (10%), Demi-orque (5%), Gnome (5%)
+- `classe` : Guerrier (20%), Magicien (15%), Voleur (15%), Clerc (15%), Rôdeur (10%), Barde (10%), Barbare (8%), Paladin (7%)
+- `niveau` : 1-3 (30%), 4-6 (40%), 7-10 (20%), 11-15 (8%), 16-20 (2%)
+- `background` : Soldat, Erudit, Criminel, Acolyte, Artiste...
+- `alignement` : Loyal Bon (15%), Neutre Bon (20%), Chaotique Bon (15%), Neutre (15%), etc.
+- `setting` : Faerûn (70%), Eberron (15%), Greyhawk (10%), Autre (5%)
+
+---
+
+## Configuration
+
+### Settings (data/settings.json)
+
 ```json
 {
   "synthetic": {
@@ -405,326 +392,38 @@ Get current application settings.
 }
 ```
 
-#### PUT `/api/settings/synthetic`
-Update synthetic vote settings.
+### Variables d'environnement
 
-**Request Body:** Partial or complete SyntheticSettings object
-
-**Response:** Updated settings object
-
-#### PUT `/api/settings/ollama`
-Update Ollama runtime settings.
-
-**Request Body:** Partial or complete OllamaSettings object
-
-**Response:** Updated settings object
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `DATA_DIR` | `./data` | Répertoire données runtime |
+| `PERSONA_DB_PATH` | `./data/personas.db` | Base personas |
+| `EVENTS_DB_PATH` | `./data/events.db` | Base événements |
+| `SETTINGS_PATH` | `./data/settings.json` | Configuration |
+| `OLLAMA_HOST` | `http://localhost:11434` | URL API Ollama |
 
 ---
 
-### Models Endpoints (`/api/models`)
+## Limites et avertissements
 
-#### GET `/api/models/`
-List available Ollama models.
+### Ce que VoxPopulAI fait bien
 
-**Response:**
-```json
-{
-  "models": [
-    {
-      "name": "qwen3:14b",
-      "size": "8.9GB",
-      "parameter_size": "14B",
-      "quantization": "Q4_K_M"
-    },
-    {
-      "name": "llama3:8b",
-      "size": "4.7GB",
-      "parameter_size": "8B",
-      "quantization": "Q4_K_M"
-    }
-  ]
-}
-```
+- ✅ Explorer des tendances démographiques simulées
+- ✅ Générer des arguments variés sur un sujet
+- ✅ Tester des hypothèses sur des corrélations
+- ✅ Créer des scénarios narratifs (worldbuilding)
 
----
+### Ce que VoxPopulAI ne fait PAS
 
-## Data Models
+- ❌ Prédire des élections réelles
+- ❌ Remplacer des sondages professionnels
+- ❌ Fournir des données sociologiques validées
+- ❌ Garantir la représentativité statistique
 
-### Persona
+### Biais connus
 
-```python
-class Persona(BaseModel):
-    id: str                          # UUID v4
-    name: str                       # Generated full name
-    attributes: Dict[str, str]       # Demographic attributes from profile
-    system_prompt: str               # LLM system prompt for the persona
-    background: str                  # Rich backstory (2-3 paragraphs)
-    model: str                       # LLM used for generation
-```
+- **Biais LLM** : Les modèles peuvent avoir des biais de training
+- **Biais de génération** : Les personas reflètent les stéréotypes des données de training
+- **Biais de question** : La formulation influence fortement les résultats
 
-**Example:**
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "Marie Dubois",
-  "attributes": {
-    "sexe": "F",
-    "age": "45-54",
-    "csp": "Cadre",
-    "habitat": "urbain",
-    "education": "Bac+5",
-    "situation_familiale": "Marié(e)",
-    "nb_enfants": "2",
-    "sensibilite_politique": "Centre",
-    "religion": "Catholique non pratiquant"
-  },
-  "system_prompt": "Tu es Marie Dubois, 48 ans, cadre dans une grande entreprise...",
-  "background": "Marie Dubois a grandi en banlieue parisienne... Elle est mariée depuis 15 ans...",
-  "model": "qwen3:14b"
-}
-```
-
-### Vote
-
-```python
-class Vote(BaseModel):
-    persona: Persona                 # The voting persona
-    position: Literal["oui", "non", "abstention"]
-    reasoning: str                   # Free-text opinion and justification
-```
-
-### VoteTally
-
-```python
-class VoteTally(BaseModel):
-    oui: int                         # Count of "oui" votes
-    non: int                         # Count of "non" votes
-    abstention: int                  # Count of "abstention" votes
-    oui_pct: float                   # Percentage (0-100)
-    non_pct: float                   # Percentage (0-100)
-    abstention_pct: float             # Percentage (0-100)
-```
-
-### VoteAnalysis
-
-```python
-class VoteAnalysis(BaseModel):
-    dominant_position: Literal["oui", "non", "abstention", "indecis"]
-    margin: float                     # Difference between 1st and 2nd position
-    key_arguments: Dict[str, List[str]]  # {"oui": [...], "non": [...]}
-    demographic_patterns: List[str]   # Insights about voting patterns
-    consensus_level: Literal["fort", "modere", "faible", "aucun"]
-```
-
-### SyntheticVoteResult
-
-```python
-class SyntheticVoteResult(BaseModel):
-    profile_name: str
-    question: str
-    persona_count: int
-    tally: VoteTally
-    analysis: VoteAnalysis
-    disclaimer: str                   # Fixed disclaimer text
-    collaboration_id: Optional[str]   # UUID for audit trail
-```
-
-### VoteRequest
-
-```python
-class VoteRequest(BaseModel):
-    profile_name: str                 # Must match available profile
-    question: str                     # The question to vote on
-    count: int = Field(default=100, ge=1, le=1000)  # Number of personas
-    models: List[str] = []            # LLM models to use (default from settings)
-```
-
-### Profile
-
-Population profiles are defined in JSON files with this structure:
-
-```json
-{
-  "name": "grand_public_france",
-  "description": "Population française adulte représentative (2024)",
-  "attributes": {
-    "sexe": {
-      "values": {
-        "F": {"weight": 52, "description": "Femme"},
-        "M": {"weight": 48, "description": "Homme"}
-      }
-    },
-    "age": {
-      "values": {
-        "18-24": {"weight": 12, "description": "18 à 24 ans"},
-        "25-34": {"weight": 18, "description": "25 à 34 ans"},
-        "35-49": {"weight": 25, "description": "35 à 49 ans"},
-        "50-64": {"weight": 28, "description": "50 à 64 ans"},
-        "65+": {"weight": 17, "description": "65 ans et plus"}
-      }
-    }
-  }
-}
-```
-
-### Settings Models
-
-#### SyntheticSettings
-
-```python
-class SyntheticSettings(BaseModel):
-    generation_model: str = "qwen3:14b"           # LLM for persona generation
-    generation_temperature: float = 0.8            # Creativity (0.0 - 2.0)
-    judge_model: str = ""                          # LLM for quality validation (optional)
-    judge_temperature: float = 0.1                 # Low for consistency
-    judge_max_retries: int = 2                     # Max validation retries
-    persona_models: List[str] = ["qwen3:14b"]      # LLMs for voting
-    analysis_model: str = "qwen3:14b"             # LLM for result analysis
-```
-
-#### OllamaSettings
-
-```python
-class OllamaSettings(BaseModel):
-    num_ctx: int = 8192           # Context window size
-    num_predict: int = -1         # Max tokens to predict (-1 = unlimited)
-    top_k: int = 40               # Top-k sampling
-    top_p: float = 0.9            # Nucleus sampling
-    temperature: float = 0.8      # Sampling temperature
-    repeat_penalty: float = 1.1   # Repetition penalty
-    frequency_penalty: float = 0.0
-    presence_penalty: float = 0.0
-```
-
----
-
-## Environment Variables
-
-| Variable | Default | Required | Description |
-|----------|---------|----------|-------------|
-| `DATA_DIR` | `./data` | No | Runtime data directory path |
-| `PERSONA_DB_PATH` | `./data/personas.db` | No | Path to personas SQLite database |
-| `EVENTS_DB_PATH` | `./data/events.db` | No | Path to events SQLite database |
-| `SETTINGS_PATH` | `./data/settings.json` | No | Path to settings JSON file |
-| `OLLAMA_HOST` | `http://localhost:11434` | No | Ollama API base URL |
-
----
-
-## Built-in Profiles
-
-### grand_public_france
-
-**Description:** Population française adulte représentative (2024)
-
-**Source:** INSEE data
-
-**Attributes:**
-- `sexe`: F (52%), M (48%)
-- `age`: 18-24 (12%), 25-34 (18%), 35-49 (25%), 50-64 (28%), 65+ (17%)
-- `csp`: Agriculture (2%), Artisan (6%), Cadre (15%), Profession intermédiaire (24%), Employé (28%), Ouvrier (15%), Retraité (10%)
-- `habitat`: Urbain (75%), Periurbain (15%), Rural (10%)
-- `education`: Sans diplôme (8%), CAP/BEP (16%), Bac (22%), Bac+2 (20%), Bac+3/4 (18%), Bac+5+ (16%)
-- `situation_familiale`: Célibataire (35%), Marié(e) (45%), Divorcé(e) (10%), Veuf/Veuve (5%), Pacsé(e) (5%)
-- `nb_enfants`: 0 (40%), 1 (20%), 2 (25%), 3+ (15%)
-- `sensibilite_politique`: Extrême gauche (5%), Gauche (20%), Centre (25%), Droite (25%), Extrême droite (15%), Sans opinion (10%)
-- `religion`: Catholique pratiquant (8%), Catholique non pratiquant (35%), Athée/Agnostique (35%), Musulman (8%), Autre (14%)
-
-### experts
-
-**Description:** Panel multidisciplinaire d'experts
-
-**Attributes:**
-- `expertise_domain`: Tech (25%), Science (20%), Économie (20%), Droit (15%), Santé (20%)
-- `seniority`: Junior (30%), Senior (50%), Expert (20%)
-- `institution_type`: Université (30%), Entreprise (40%), Institution publique (20%), Indépendant (10%)
-- `geography`: Europe (50%), Amérique du Nord (25%), Asie (15%), Autre (10%)
-- `publication_record`: Aucune (20%), Modérée (50%), Importante (30%)
-
-### developpeurs
-
-**Description:** Développeurs logiciels
-
-**Attributes:**
-- `experience_level`: Junior (35%), Senior (40%), Lead (20%), Architect (5%)
-- `primary_language`: Python (30%), JavaScript (25%), Java (15%), Go (10%), Rust (8%), Autre (12%)
-- `company_type`: Startup (35%), Enterprise (40%), Agency (15%), Freelance (10%)
-- `remote_work`: 100% remote (30%), Hybride (50%), Sur site (20%)
-
-### donjon_et_dragon
-
-**Description:** Groupe d'aventuriers Donjons & Dragons 5e
-
-**Attributes:**
-- `race`: Humain (35%), Elfe (20%), Nain (15%), Halfelin (10%), Demi-elfe (10%), Demi-orque (5%), Gnome (5%)
-- `classe`: Guerrier (20%), Magicien (15%), Voleur (15%), Clerc (15%), Rôdeur (10%), Barde (10%), Barbare (8%), Paladin (7%)
-- `niveau`: 1-3 (30%), 4-6 (40%), 7-10 (20%), 11-15 (8%), 16-20 (2%)
-- `background`: Soldat (20%), Erudit (15%), Criminel (12%), Acolyte (12%), Artiste (10%), Autre (31%)
-- `alignement`: Loyal Bon (15%), Neutre Bon (20%), Chaotique Bon (15%), Loyal Neutre (10%), Neutre (15%), Chaotique Neutre (10%), Loyal Mauvais (5%), Neutre Mauvais (5%), Chaotique Mauvais (5%)
-- `setting`: Faerûn (70%), Eberron (15%), Greyhawk (10%), Autre (5%)
-
----
-
-## Error Handling
-
-### HTTP Status Codes
-
-- `200 OK`: Successful GET/PUT operations
-- `201 Created`: Successful POST operations (where applicable)
-- `204 No Content`: Successful DELETE operations
-- `400 Bad Request`: Invalid parameters or request body
-- `404 Not Found`: Resource does not exist
-- `422 Unprocessable Entity`: Validation error (Pydantic)
-- `500 Internal Server Error`: Server-side error
-
-### Error Response Format
-
-```json
-{
-  "detail": "Error message describing what went wrong"
-}
-```
-
-For validation errors:
-```json
-{
-  "detail": [
-    {
-      "loc": ["body", "count"],
-      "msg": "ensure this value is less than or equal to 1000",
-      "type": "value_error.number.not_le"
-    }
-  ]
-}
-```
-
----
-
-## Rate Limiting
-
-No built-in rate limiting is currently implemented. For production deployment, consider:
-
-- Nginx rate limiting
-- FastAPI middleware for rate limiting
-- Ollama queue depth monitoring
-
----
-
-## Pagination
-
-All list endpoints use offset-based pagination:
-
-**Query Parameters:**
-- `limit`: Maximum items to return (default varies by endpoint)
-- `offset`: Number of items to skip (default: 0)
-
-**Response includes:**
-- `total`: Total number of items available
-- `limit`: Limit applied to this request
-- `offset`: Offset applied to this request
-
-**Example navigation:**
-```
-GET /api/personas/?limit=50&offset=0    # First page
-GET /api/personas/?limit=50&offset=50   # Second page
-GET /api/personas/?limit=50&offset=100  # Third page
-```
+**Utiliser comme outil d'exploration, pas comme vérité absolue.**
