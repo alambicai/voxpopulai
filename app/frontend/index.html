@@ -9,21 +9,16 @@
 <body>
 
   <header id="header">
-    <div class="header-brand"><span class="header-brand-emoji">🗳️</span> VoxPopulAI</div>
-    <div class="header-tagline">Simulateur de vote synthetique</div>
-  </header>
-
-  <nav id="sidebar">
-    <div class="nav-group">
-      <ul class="nav-links">
-        <li><a href="#/vote" data-route="vote"><span class="nav-emoji">🗳️</span> Vote</a></li>
-        <li><a href="#/personas" data-route="personas"><span class="nav-emoji">👥</span> Personas</a></li>
-        <li><a href="#/history" data-route="history"><span class="nav-emoji">📜</span> Historique</a></li>
-        <li><a href="#/settings" data-route="settings"><span class="nav-emoji">⚙️</span> Parametres</a></li>
-      </ul>
+    <div class="header-brand">
+      <span class="header-brand-emoji">🗳️</span>
+      <span class="header-brand-text">VoxPopulAI</span>
     </div>
-    <div class="sidebar-footer">v0.1 &middot; VoxPopulAI</div>
-  </nav>
+    <nav class="header-nav">
+      <a href="#/vote" data-route="vote" class="header-nav-link">Vote</a>
+      <a href="#/history" data-route="history" class="header-nav-link">Historique</a>
+      <a href="#/personas" data-route="personas" class="header-nav-link">Personas</a>
+    </nav>
+  </header>
 
   <main id="app"></main>
 

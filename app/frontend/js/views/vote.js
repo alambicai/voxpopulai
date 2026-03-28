@@ -31,39 +31,56 @@ async function renderVote() {
   const app = document.getElementById("app");
 
   app.innerHTML = `
-    <div class="page-header">
-      <div>
-        <div class="page-title">Vote a l'assemblee</div>
-        <div class="page-subtitle">Simulez un vote par population synthetique generee par IA</div>
+    <div class="vote-simple-container">
+      <div class="vote-simple-hero">
+        <div class="vote-simple-logo">🗳️</div>
+        <h1 class="vote-simple-title">VoxPopulAI</h1>
+        <p class="vote-simple-subtitle">Simulateur de vote par population synthetique</p>
       </div>
-    </div>
-    <div class="vote-layout">
-      <div class="card vote-form">
-        <div class="card-header"><span class="card-title">Nouveau vote</span></div>
-        <div>
-          <div class="form-label">Profil de population</div>
-          <div class="vote-profile-list" id="vf-profiles"><div class="loading-bar"></div></div>
+      
+      <div class="vote-simple-form">
+        <div class="vote-simple-question">
+          <textarea 
+            class="vote-simple-input" 
+            id="vf-topic" 
+            rows="3" 
+            placeholder="Posez votre question ici..."
+            autofocus
+          ></textarea>
         </div>
-        <div style="margin-top:12px">
-          <div class="form-label">Question a soumettre au vote</div>
-          <textarea class="form-control" id="vf-topic" rows="3" placeholder="Posez une question claire appelant un avis oui/non/abstention..."></textarea>
+        
+        <div class="vote-simple-options">
+          <div class="vote-simple-field">
+            <label class="vote-simple-label">Population</label>
+            <select class="vote-simple-select" id="vf-profile">
+              <option value="">Chargement...</option>
+            </select>
+          </div>
+          
+          <div class="vote-simple-field vote-simple-voters">
+            <label class="vote-simple-label">Votants</label>
+            <div class="vote-simple-voters-control">
+              <input type="range" class="vote-simple-slider" id="vf-voters" min="5" max="100" value="20" step="1">
+              <span class="vote-simple-voters-value" id="vf-voters-val">20</span>
+            </div>
+          </div>
         </div>
-        <div style="margin-top:12px">
-          <div class="form-label">Nombre de votants : <span id="vf-voters-val">20</span></div>
-          <input type="range" class="vote-slider" id="vf-voters" min="5" max="100" value="20" step="1">
-        </div>
-        <div style="margin-top:12px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-            <input type="checkbox" id="vf-reuse"> Reutiliser les personas existants
+        
+        <div class="vote-simple-advanced" id="vf-advanced">
+          <label class="vote-simple-checkbox">
+            <input type="checkbox" id="vf-reuse">
+            <span>Reutiliser les personas existants</span>
           </label>
+          <div class="vote-simple-disclaimer">
+            ⚠️ SIMULATION — Les votes proviennent de personas generes par IA
+          </div>
         </div>
-        <div class="vote-disclaimer-pre">
-          ⚠️ SIMULATION — Les votes proviennent de personas generes par IA et ne representent pas de vraies opinions humaines.
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-primary" id="vf-run">Lancer le vote</button>
-        </div>
+        
+        <button class="vote-simple-btn" id="vf-run">
+          <span>Lancer le vote</span>
+        </button>
       </div>
+      
       <div id="vote-result"></div>
     </div>
   `;
@@ -71,28 +88,18 @@ async function renderVote() {
   // Load profiles
   API.get("/profiles/").then(resp => {
     const profiles = resp.profiles || [];
-    const container = document.getElementById("vf-profiles");
+    const select = document.getElementById("vf-profile");
     if (!profiles.length) {
-      container.innerHTML = '<div style="color:var(--text-muted)">Aucun profil disponible.</div>';
+      select.innerHTML = '<option value="">Aucun profil</option>';
       return;
     }
-    container.innerHTML = profiles.map((p, i) => `
-      <label class="vote-profile-card ${i === 0 ? "selected" : ""}">
-        <input type="radio" name="vote-profile" value="${_escapeHtml(p.name)}" ${i === 0 ? "checked" : ""}>
-        <span class="vote-profile-emoji">${_escapeHtml(p.icon || "🗳️")}</span>
-        <span class="vote-profile-name">${_escapeHtml(p.name)}</span>
-        <span class="vote-profile-desc">${_escapeHtml(p.description)}</span>
-      </label>
+    select.innerHTML = profiles.map((p, i) => `
+      <option value="${_escapeHtml(p.name)}" ${i === 0 ? "selected" : ""}>
+        ${_escapeHtml(p.icon || "🗳️")} ${_escapeHtml(p.name)}
+      </option>
     `).join("");
-    container.querySelectorAll(".vote-profile-card").forEach(card => {
-      card.addEventListener("click", () => {
-        container.querySelectorAll(".vote-profile-card").forEach(c => c.classList.remove("selected"));
-        card.classList.add("selected");
-        card.querySelector("input").checked = true;
-      });
-    });
   }).catch(() => {
-    document.getElementById("vf-profiles").innerHTML = '<div style="color:var(--error)">Erreur de chargement des profils.</div>';
+    document.getElementById("vf-profile").innerHTML = '<option value="">Erreur</option>';
   });
 
   // Slider live value
@@ -102,13 +109,13 @@ async function renderVote() {
 
   // Run vote
   document.getElementById("vf-run").addEventListener("click", async () => {
-    const profileRadio = document.querySelector('input[name="vote-profile"]:checked');
-    if (!profileRadio) { showAlert("Selectionnez un profil de population."); return; }
+    const profileSelect = document.getElementById("vf-profile");
+    if (!profileSelect.value) { showAlert("Selectionnez un profil."); return; }
     const topic = document.getElementById("vf-topic").value.trim();
     if (!topic) { showAlert("Entrez une question."); return; }
     const data = {
       question: topic,
-      population_profile: profileRadio.value,
+      population_profile: profileSelect.value,
       num_voters: parseInt(document.getElementById("vf-voters").value),
       reuse_personas: document.getElementById("vf-reuse").checked,
     };
@@ -118,18 +125,20 @@ async function renderVote() {
 
 async function _runVote(data) {
   const resultEl = document.getElementById("vote-result");
-  resultEl.innerHTML = `<div class="card">
-    <div class="progress-container">
-      <div class="progress-label" id="vote-progress-label">Preparation...</div>
-      <div class="progress-bar-track"><div class="progress-bar-fill" id="vote-progress-bar"></div></div>
-      <div class="progress-phase" id="vote-progress-phase"></div>
+  const formEl = document.querySelector(".vote-simple-form");
+  
+  // Cache le formulaire et montre la progression
+  formEl.style.display = "none";
+  resultEl.innerHTML = `
+    <div class="vote-simple-progress">
+      <div class="vote-simple-progress-label" id="vote-progress-label">Preparation...</div>
+      <div class="vote-simple-progress-bar">
+        <div class="vote-simple-progress-fill" id="vote-progress-bar"></div>
+      </div>
+      <div class="vote-simple-progress-phase" id="vote-progress-phase"></div>
+      <button class="btn btn-ghost btn-stop" id="vote-stop">Annuler</button>
     </div>
-    <button class="btn btn-ghost btn-stop" id="vote-stop">Stop</button>
-  </div>`;
-
-  const runBtn = document.getElementById("vf-run");
-  runBtn.disabled = true;
-  runBtn.innerHTML = '<span class="spinner"></span> Vote en cours...';
+  `;
 
   const bar = document.getElementById("vote-progress-bar");
   const label = document.getElementById("vote-progress-label");
@@ -160,7 +169,8 @@ async function _runVote(data) {
       phase.textContent = "";
       setTimeout(() => _renderVoteResult(event.result), 400);
     } else if (event.type === "error") {
-      resultEl.innerHTML = `<div class="card" style="border-color:var(--error)"><p style="color:var(--error)">Erreur : ${_escapeHtml(event.message)}</p></div>`;
+      resultEl.innerHTML = `<div class="vote-simple-error">Erreur : ${_escapeHtml(event.message)}</div>`;
+      formEl.style.display = "block";
     }
   });
 
@@ -177,13 +187,11 @@ async function _runVote(data) {
       const info = lastProgress
         ? `Interrompu — ${lastProgress.phase} : ${lastProgress.current}/${lastProgress.total}`
         : "Interrompu";
-      resultEl.innerHTML = `<div class="card"><p>${_escapeHtml(info)}</p></div>`;
+      resultEl.innerHTML = `<div class="vote-simple-error">${_escapeHtml(info)}</div>`;
     } else {
-      resultEl.innerHTML = `<div class="card" style="border-color:var(--error)"><p style="color:var(--error)">Erreur : ${_escapeHtml(err.message)}</p></div>`;
+      resultEl.innerHTML = `<div class="vote-simple-error">Erreur : ${_escapeHtml(err.message)}</div>`;
     }
-  } finally {
-    runBtn.disabled = false;
-    runBtn.textContent = "Relancer le vote";
+    formEl.style.display = "block";
   }
 }
 
@@ -244,7 +252,6 @@ function _renderVoteResult(result) {
   const votes = result.votes || [];
 
   const posColor = (pos) => pos === "oui" ? "vote-oui" : pos === "non" ? "vote-non" : "vote-abstention";
-  const posIcon = (pos) => pos === "oui" ? "✅" : pos === "non" ? "❌" : "➖";
   const posEmoji = (pos) => pos === "oui" ? "✅" : pos === "non" ? "❌" : "➖";
 
   const consensusLabels = { fort: "Consensus fort", modere: "Consensus modere", faible: "Consensus faible", aucun: "Pas de consensus" };
@@ -295,7 +302,11 @@ function _renderVoteResult(result) {
   const marginPct = analysis.margin != null ? (analysis.margin * 100).toFixed(0) : "0";
   const consensusLevel = analysis.consensus_level || "aucun";
 
-  el.innerHTML = `<div class="vote-result">
+  el.innerHTML = `<div class="vote-result card">
+    <div class="vote-simple-back">
+      <button class="btn btn-ghost" onclick="renderVote()">← Nouveau vote</button>
+    </div>
+    
     <div class="card-header">
       <span class="card-title">Resultats du vote</span>
       <span class="tag">${result.total_voters || votes.length} votants</span>
