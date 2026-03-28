@@ -6,25 +6,26 @@
 
 ## Pourquoi VoxPopulAI
 
-VoxPopulAI permet d'**explorer les opinions** d'une population simulée avant de prendre des décisions importantes, de valider des intuitions sur les tendances démographiques, ou simplement de comprendre comment différents profils perçoivent un sujet.
+VoxPopulAI est un **laboratoire d'expérimentation sur les LLMs**. Il permet d'observer comment un même modèle de langage produit des réponses différentes lorsqu'on lui attribue des personas variés, et d'explorer les patterns, biais et limites de la génération conditionnée.
 
-### Cas d'usage
+### Ce qu'on peut observer
 
-| Besoin | Comment |
-| ------ | ------- |
-| **Sondage avant référendum** | Simuler 1000 citoyens sur une question de société |
-| **Validation produit** | Tester la réaction de développeurs à une nouvelle feature |
-| **Worldbuilding** | Simuler un vote dans l'univers D&D (quartier des nains vs elfes) |
-| **Éducation** | Comprendre les clivages sociétaux sur des sujets historiques |
-| **Veille** | Explorer les opinions de différentes populations sur un sujet émergent |
+| Phénomène | Ce que ça révèle |
+| --------- | ---------------- |
+| **Variation par contexte** | Comment un changement d'attributs (âge, profession, alignement D&D) modifie la réponse générée |
+| **Cohérence des raisonnements** | Les arguments produits sont-ils véritablement liés au persona ou des clichés de l'entraînement ? |
+| **Biais de génération** | Quels stéréotypes le modèle reproduit-il spontanément ? |
+| **Limites de conditionnement** | Jusqu'où le "persona" influence-t-il réellement la sortie ? |
+| **Worldbuilding créatif** | Peut-on générer des dynamiques narratives cohérentes (votes dans un univers fictif) ? |
 
-### Bénéfices
+### Ce que ça n'est PAS
 
-- **Rapide** : Obtenir des insights en minutes, pas en semaines de sondage
-- **Contrôlé** : Tester différentes populations (âge, CSP, région) indépendamment
-- **Explicatif** : Chaque vote inclut un raisonnement, pas juste un chiffre
-- **Audit** : Traçabilité complète des décisions de chaque persona
-- **Local** : Pas de données externes, tout tourne sur votre machine
+- ❌ Un outil de sondage ou de prédiction électorale
+- ❌ Une étude sociologique valide
+- ❌ Une simulation fidèle de la réalité
+- ❌ Une source de vérité sur les opinions réelles des populations
+
+Les résultats sont des **artefacts de génération LLM** — utiles pour comprendre les modèles, inutiles pour comprendre la société.
 
 ---
 
@@ -32,104 +33,112 @@ VoxPopulAI permet d'**explorer les opinions** d'une population simulée avant de
 
 ### Scénario 1 — "Référendum sur les smartphones à l'école"
 
+**Objectif d'exploration** : Observer comment le LLM génère des positions différentes selon les attributs démographiques attribués, et identifier les patterns stéréotypés.
+
 ```
-Toi : "Faut-il interdire les smartphones dans les écoles ?"
+Question : "Faut-il interdire les smartphones dans les écoles ?"
 
 → Profil : grand_public_france
 → Nombre de personas : 500
-→ Question : "Faut-il interdire les smartphones dans les écoles ?"
 
-VoxPopulAI :
-  Phase 1 — Génération : 500 personas avec attributs réalistes
-  Phase 2 — Vote : chaque persona vote avec son contexte propre
+Observation :
+  Phase 1 — Génération : 500 personas avec attributs variés
+  Phase 2 — Vote : chaque persona génère une réponse conditionnée
   
-  Exemples de votes :
+  Exemples de générations :
   
   Marie Dubois (45 ans, cadre, 2 enfants) :
     Position : OUI
     Raisonnement : "En tant que mère, je vois l'addiction aux écrans.
                     Mes enfants sont déjà trop connectés."
+    → Note : Le modèle associe "parent + 45 ans" à l'inquiétude sur les écrans
   
   Lucas Martin (22 ans, étudiant) :
     Position : NON  
     Raisonnement : "C'est un outil pédagogique. Les interdire c'est
                     nier l'évolution technologique."
+    → Note : Le modèle associe "étudiant + 22 ans" à la défense technophile
   
-  Résultat :
+  Résultat agrégé :
     OUI : 67% (335 votes)
     NON : 23% (115 votes)
     ABSTENTION : 10% (50 votes)
   
-  Analyse qualitative :
-    Position dominante : OUI (marge +44%)
-    Arguments OUI : "Addiction", "Distraction", "Violence scolaire"
-    Arguments NON : "Outil pédagogique", "Digital native", "Urgences"
-    Patterns : Les parents d'enfants favorables +66%, 18-24 ans opposés
-
-Résultat : une vision nuancée avec arguments des deux côtés.
+  Patterns observés :
+    - Parents d'enfants : +66% de votes OUI
+    - 18-24 ans : majoritairement NON
+    - CSP+ : corrélation OUI plus forte que chez ouvriers
+    
+  Ce que ça montre :
+    Le modèle reproduit des stéréotypes sociétaux dans ses générations.
+    Ces corrélations reflètent les patterns de l'entraînement, pas la réalité.
 ```
 
-### Scénario 2 — "Validation d'une feature tech"
+### Scénario 2 — "Développeurs et déploiement automatique"
+
+**Objectif d'exploration** : Tester jusqu'où le conditionnement par "expérience" et "rôle" influence la réponse générée dans un domaine technique.
 
 ```
-Toi : "Est-ce que les développeurs accepteraient un déploiement
-        automatique sans review ?"
+Question : "Êtes-vous favorable au déploiement automatique sans
+            review humaine pour les hotfixes critiques ?"
 
 → Profil : developpeurs
 → Nombre : 100
-→ Question : "Êtes-vous favorable au déploiement automatique sans
-              review humaine pour les hotfixes critiques ?"
 
-VoxPopulAI :
-  Phase 1 — Génération : 100 devs avec niveaux d'expérience variés
-  Phase 2 — Vote : consultation des personas
-  
-  Exemples :
+Observation :
   
   Senior DevOps (12 ans exp) :
     Position : OUI (avec conditions)
     Raisonnement : "Si tests auto complets + rollback instantané,
                     c'est plus sûr qu'un humain pressé à 3h du mat."
+    → Le modèle associe "DevOps + senior" à l'automatisation pragmatique
   
   Junior Frontend (2 ans exp) :
     Position : NON
     Raisonnement : "Trop risqué. J'ai déjà cassé la prod en pensant
                     que mon fix était simple. Review obligatoire."
+    → Le modèle associe "junior + frontend" à la prudence et aux échecs passés
   
   Lead Architect (15 ans exp) :
     Position : ABSTENTION
     Raisonnement : "Dépend du contexte. Hotfix oui, feature non.
                     Trop nuancé pour une réponse binaire."
+    → Le "lead" génère plus de nuance — est-ce un vrai raisonnement
+      ou un stéréotype de "sagesse hiérarchique" ?
 
-  Résultat :
-    OUI : 35% (mais majoritairement "avec conditions")
+  Résultat agrégé :
+    OUI : 35%
     NON : 45%
     ABSTENTION : 20%
   
-  Patterns démographiques :
-    - Seniorité inversement corrélée avec opposition
-    - DevOps plus favorables que développeurs frontend
-    - Ceux qui ont connu des outages majeurs opposés
-
-Résultat : le consensus n'existe pas, implémentation risquée.
+  Patterns :
+    - "Seniorité" inversement corrélée avec opposition
+    - "DevOps" ≠ "Frontend" dans les positions générées
+    
+  Ce que ça montre :
+    Le LLM reproduit des stéréotypes de l'industrie tech.
+    La "position" est générée à partir du label de rôle, pas d'une expertise réelle.
 ```
 
 ### Scénario 3 — "Vote dans l'univers D&D"
 
+**Objectif d'exploration** : Tester la cohérence narrative — peut-on générer un système politique fictif où les réponses respectent la logique interne de l'univers ?
+
 ```
-Toi : "Le conseil des guildes doit-il autoriser la magie nécromancienne
-        dans la ville de Waterdeep ?"
+Contexte : Faerûn, D&D 5e
+Question : "Le conseil des guildes doit-il autoriser la magie 
+            nécromancienne dans Waterdeep ?"
 
 → Profil : donjon_et_dragon
 → Nombre : 50
-→ Contexte : Faerûn, D&D 5e
 
-VoxPopulAI génère 50 aventuriers :
-- 5 paladins (Loyal Bon) → majoritairement CONTRE
-- 8 magiciens (dont 2 nécromanciens) → majoritairement POUR  
-- 3 clercs de Kelemvor → FERMEMENT CONTRE
-- 6 roublards → majoritairement ABSTENTION (pas leur problème)
-- etc.
+Observation :
+
+VoxPopulAI génère 50 aventuriers avec alignements et classes :
+- 5 paladins (Loyal Bon) → majoritairement CONTRE (cohérent avec alignement)
+- 8 magiciens (dont 2 nécromanciens) → majoritairement POUR (cohérent)
+- 3 clercs de Kelemvor → FERMEMENT CONTRE (cohérent avec déité)
+- 6 roublards → majoritairement ABSTENTION ("pas leur problème")
 
 Résultat :
   OUI : 30% (magiciens, certains warlocks)
@@ -137,12 +146,16 @@ Résultat :
   ABSTENTION : 15% (roublards, barbares)
 
 Analyse :
-  Position dominante : NON (marge 25%)
-  Argument clé OUI : "Contrôler la mort ≠ la malédiction"
-  Argument clé NON : "Ouvrir la porte au culte du serpent"
-  Pattern : Alignement détermine 80% des votes
-
-Usage : scénario de campagne avec tensions politiques réalistes.
+  - Alignement détermine ~80% des votes
+  - Classes liées à la magie arcane plus favorables
+  - Le LLM respecte la cohérence de l'univers (pas de paladin pro-nécromancie)
+  
+Ce que ça montre :
+  Le conditionnement par "alignement" et "classe" fonctionne bien
+  pour la cohérence narrative. Le modèle applique correctement
+  les règles implicites de l'univers D&D.
+  
+Usage : création de dynamiques politiques pour campagnes RPG.
 ```
 
 ---
@@ -406,24 +419,45 @@ class Vote(BaseModel):
 
 ## Limites et avertissements
 
-### Ce que VoxPopulAI fait bien
+### Ce que VoxPopulAI révèle
 
-- ✅ Explorer des tendances démographiques simulées
-- ✅ Générer des arguments variés sur un sujet
-- ✅ Tester des hypothèses sur des corrélations
-- ✅ Créer des scénarios narratifs (worldbuilding)
+- ✅ Comment les LLMs conditionnent leurs réponses selon le contexte attribué
+- ✅ Les stéréotypes et patterns que le modèle reproduit spontanément
+- ✅ La cohérence (ou l'absence de cohérence) des raisonnements générés
+- ✅ L'efficacité du "role prompting" pour guider les sorties
+- ✅ La variabilité des réponses à question identique selon le persona
 
 ### Ce que VoxPopulAI ne fait PAS
 
-- ❌ Prédire des élections réelles
-- ❌ Remplacer des sondages professionnels
+- ❌ Prédire des comportements humains réels
 - ❌ Fournir des données sociologiques validées
-- ❌ Garantir la représentativité statistique
+- ❌ Remplacer des études empiriques ou des sondages
+- ❌ Simuler fidèlement la réalité démographique
+- ❌ Garantir la représentativité statistique de quoi que ce soit
 
-### Biais connus
+### Ce que les résultats représentent vraiment
 
-- **Biais LLM** : Les modèles peuvent avoir des biais de training
-- **Biais de génération** : Les personas reflètent les stéréotypes des données de training
-- **Biais de question** : La formulation influence fortement les résultats
+Les votes générés sont des **artefacts du modèle de langage** utilisé. Ils reflètent :
 
-**Utiliser comme outil d'exploration, pas comme vérité absolue.**
+- Les biais et patterns de l'entraînement du LLM
+- Les stéréotypes présents dans les données de training
+- La capacité du modèle à suivre des instructions de conditionnement
+- Les corrélations statistiques apprises (pas nécessairement les corrélations réelles)
+
+### Interprétation correcte
+
+**Incorrect** : "Les parents français sont favorables à 67% à l'interdiction des smartphones"
+
+**Correct** : "Le modèle qwen3:14b, lorsqu'on lui attribue le persona 'parent français', génère une réponse 'OUI' dans 67% des cas sur cette question"
+
+### Biais et limitations connus
+
+| Source | Impact |
+|--------|--------|
+| **Biais de training** | Le LLM reproduit les stéréotypes de ses données d'entraînement |
+| **Biais de génération** | Les personas sont des constructions textuelles, pas des individus simulés |
+| **Biais de question** | La formulation influence fortement les réponses générées |
+| **Coût computationnel** | Échantillon limité par les ressources (temps, GPU) |
+| **Déterminisme partiel** | Mêmes seeds ≠ mêmes résultats exacts (sampling aléatoire) |
+
+**À utiliser comme outil d'expérimentation sur les LLMs, pas comme base pour des décisions réelles.**
